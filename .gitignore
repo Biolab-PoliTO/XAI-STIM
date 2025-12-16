@@ -2,4 +2,4 @@
 .DS_Store
 
 # Cartella provvisoria
-.build/
+/build
