@@ -1,5 +1,6 @@
 # File di sistema
 .DS_Store
 
-# Cartella provvisoria
+# Cartelle provvisorie
 /build
+/XAI_validation_tool
