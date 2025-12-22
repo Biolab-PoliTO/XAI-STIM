@@ -10,8 +10,6 @@ This script provides a simple command-line interface to the complete pipeline:
 Usage:
     python run.py prepare      # Run dataset preparation
     python run.py organize     # Organize into train/val/test
-    python run.py train        # Train models
-    python run.py infer        # Run inference
     python run.py verify       # Verify organized dataset
     python run.py stats        # Show dataset statistics
 
