@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAI-STIM Validation Tool - User Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .guide-container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #6A1B9A 0%, #4A148C 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        
+        .content {
+            padding: 30px;
+            display: none;
+        }
+        
+        .content.active {
+            display: block;
+        }
+        
+        .setup-screen {
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .setup-screen.hidden {
+            display: none;
+        }
+        
+        .folder-selector {
+            margin: 30px auto;
+            padding: 40px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            max-width: 500px;
+        }
+        
+        .folder-selector h2 {
+            color: #6A1B9A;
+            margin-bottom: 20px;
+        }
+        
+        .folder-selector p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .folder-selector input[type="file"] {
+            display: none;
+        }
+        
+        .folder-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #6A1B9A;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        
+        .folder-btn:hover {
+            background: #4A148C;
+        }
+        
+        .skip-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #757575;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 10px;
+            transition: background 0.3s;
+        }
+        
+        .skip-btn:hover {
+            background: #616161;
+        }
+        
+        .loaded-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .loaded-status.show {
+            display: block;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section h2 {
+            color: #6A1B9A;
+            font-size: 24px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #6A1B9A;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section h2:hover {
+            color: #4A148C;
+        }
+        
+        .toggle-icon {
+            font-size: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .section.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .section-content {
+            margin-top: 20px;
+            max-height: 10000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .section.collapsed .section-content {
+            max-height: 0;
+        }
+        
+        .subsection {
+            margin: 25px 0;
+        }
+        
+        .subsection h3 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .info-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box strong {
+            color: #e65100;
+        }
+        
+        .tip-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .tip-box strong {
+            color: #1565c0;
+        }
+        
+        .step-list {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        
+        .step-list li {
+            margin: 10px 0;
+            padding-left: 10px;
+        }
+        
+        .image-container {
+            margin: 20px 0;
+            text-align: center;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed #ddd;
+        }
+        
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .image-placeholder {
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .image-caption {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table th {
+            background: #6A1B9A;
+            color: white;
+            font-weight: bold;
+        }
+        
+        table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .highlight {
+            background: #fff59d;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        .navigation-bottom {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .nav-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: #6A1B9A;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        .nav-btn:hover {
+            background: #4A148C;
+        }
+        
+        .checklist {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .checklist li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            font-size: 18px;
+            color: #6A1B9A;
+        }
+        
+        .workflow-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .toc {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .toc h3 {
+            color: #6A1B9A;
+            margin-bottom: 15px;
+        }
+        
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .toc li {
+            padding: 8px 0;
+        }
+        
+        .toc a {
+            color: #333;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .toc a:hover {
+            color: #6A1B9A;
+        }
+        
+        .expand-all-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #6A1B9A;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: background 0.3s;
+        }
+        
+        .expand-all-btn:hover {
+            background: #4A148C;
+        }
+    </style>
+</head>
+<body>
+    <div class="guide-container">
+        <div class="header">
+            <h1>🧠 XAI-STIM Validation Tool</h1>
+            <p>Interactive User Guide for Clinicians</p>
+        </div>
+        
+        <!-- Setup Screen -->
+        <div class="setup-screen" id="setupScreen">
+            <div class="folder-selector">
+                <h2>📁 Load Guide Images (Optional)</h2>
+                <p>If you have screenshots or videos to illustrate this guide, select the folder containing them. Otherwise, skip this step.</p>
+                <label for="folderInput" class="folder-btn">📂 Select Image Folder</label>
+                <input type="file" id="folderInput" webkitdirectory directory multiple>
+                <button class="skip-btn" onclick="startGuide()">Skip & Continue</button>
+                
+                <div class="loaded-status" id="loadedStatus">
+                    <strong>✓ Loaded</strong> <span id="imageCount">0</span> images
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="content" id="mainContent">
+            <!-- Table of Contents -->
+            <div class="toc">
+                <h3>📋 Quick Navigation</h3>
+                <ul>
+                    <li><a href="#introduction">Introduction</a></li>
+                    <li><a href="#getting-started">Getting Started</a></li>
+                    <li><a href="#workflow">Step-by-Step Workflow</a></li>
+                    <li><a href="#tips">Tips & Troubleshooting</a></li>
+                </ul>
+            </div>
+            
+            <!-- Introduction -->
+            <div class="section" id="introduction">
+                <h2 onclick="toggleSection(this)">
+                    <span>Introduction</span>
+                    <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="section-content">
+                    <div class="info-box">
+                        <strong>What is this tool?</strong><br>
+                        This is a validation tool for reviewing automatic STN (SubThalamic Nucleus) detection from microelectrode recordings (MERs). It uses AI to identify STN regions and shows you explanations of how the AI made its decisions.
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3>What You'll Do:</h3>
+                        <ol class="step-list">
+                            <li>Mark regions on MER signals where you see STN activity</li>
+                            <li>Review the AI's automatic detection and explanations</li>
+                            <li>Provide feedback on the AI's performance</li>
+                            <li>Export your annotations and responses</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="image-container" data-image="main_interface.png">
+                        <div class="image-placeholder">Screenshot: Main Interface Overview</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Getting Started -->
+            <div class="section" id="getting-started">
+                <h2 onclick="toggleSection(this)">
+                    <span>Getting Started</span>
+                    <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="section-content">
+                    <div class="subsection">
+                        <h3>Requirements:</h3>
+                        <ul class="step-list">
+                            <li>Web browser (Chrome, Firefox, or Edge recommended)</li>
+                            <li>MER trajectory files in JSON format</li>
+                            <li>Basic familiarity with MER signal interpretation</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3>Opening the Tool:</h3>
+                        <ol class="step-list">
+                            <li>Locate the <code>XAI_STIM_validation_tool.html</code> file</li>
+                            <li>Double-click to open it in your browser</li>
+                            <li>The tool runs entirely in your browser - no installation needed</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="image-container" data-image="opening_file.png">
+                        <div class="image-placeholder">Screenshot: Opening the Tool</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workflow -->
+            <div class="section" id="workflow">
+                <h2 onclick="toggleSection(this)">
+                    <span>Step-by-Step Workflow</span>
+                    <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="section-content">
+                    <div class="workflow-box">
+                        Load Data → Profile → Select Trajectory → Annotate → Review AI → Survey → Repeat → Export
+                    </div>
+                    
+                    <!-- Step 1 -->
+                    <div class="subsection">
+                        <h3>Step 1: Load Your Data</h3>
+                        <div class="info-box">
+                            Click <strong>"Select Trajectory Files"</strong> and choose your JSON files. You can select multiple files at once.
+                        </div>
+                        
+                        <div class="image-container" data-image="load_data.png">
+                            <div class="image-placeholder">Screenshot: Loading Data Files</div>
+                        </div>
+                        
+                        <p>Once loaded, you'll see statistics showing the number of trajectories and questions. Click <strong>"Start Study"</strong> to begin.</p>
+                        
+                        <div class="image-container" data-image="data_loaded.png">
+                            <div class="image-placeholder">Screenshot: Data Successfully Loaded</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div class="subsection">
+                        <h3>Step 2: Enter Your Profile</h3>
+                        <p>Provide basic information about yourself:</p>
+                        <ul class="step-list">
+                            <li><strong>Participant ID:</strong> Auto-filled with current date/time (you can modify it)</li>
+                            <li><strong>Years of Experience:</strong> Your experience with MER interpretation</li>
+                            <li><strong>Role:</strong> Select your professional role</li>
+                        </ul>
+                        
+                        <div class="image-container" data-image="profile.png">
+                            <div class="image-placeholder">Screenshot: Profile Information Form</div>
+                        </div>
+                        
+                        <p>Answer 6 Yes/No questions about your experience with AI systems.</p>
+                        
+                        <div class="image-container" data-image="ai_questions.png">
+                            <div class="image-placeholder">Screenshot: AI Attitude Questions</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3 -->
+                    <div class="subsection">
+                        <h3>Step 3: Select a Trajectory</h3>
+                        <p>Choose which trajectory you want to annotate. Click on any trajectory to select it (it will turn green), then click <strong>"Annotate Trajectory"</strong>.</p>
+                        
+                        <div class="image-container" data-image="select_trajectory.png">
+                            <div class="image-placeholder">Screenshot: Trajectory Selection</div>
+                        </div>
+                        
+                        <div class="tip-box">
+                            <strong>Tip:</strong> Completed trajectories are marked with ✓ and grayed out. The interface shows your progress (e.g., "2 of 5 completed").
+                        </div>
+                        
+                        <div class="image-container" data-image="trajectory_select.gif">
+                            <div class="image-placeholder">GIF: Selecting a Trajectory</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4 -->
+                    <div class="subsection">
+                        <h3>Step 4: Annotate the Signal (Blind Review)</h3>
+                        <div class="info-box">
+                            <strong>Your Task:</strong> Mark regions where you identify STN-typical activity by clicking and dragging on the signal plot.
+                        </div>
+                        
+                        <div class="image-container" data-image="annotation_interface.png">
+                            <div class="image-placeholder">Screenshot: Annotation Interface</div>
+                        </div>
+                        
+                        <p><strong>Understanding the Plot:</strong></p>
+                        <ul class="step-list">
+                            <li><strong>X-axis:</strong> Time in seconds</li>
+                            <li><strong>Y-axis:</strong> Depth in millimeters</li>
+                            <li><strong>Each line:</strong> One recording channel at a specific depth</li>
+                        </ul>
+                        
+                        <p><strong>Creating Annotations:</strong></p>
+                        <ol class="step-list">
+                            <li>Make sure <span class="highlight">✏️ Annotation Mode</span> is checked</li>
+                            <li>Click and drag across the time period showing STN activity</li>
+                            <li>A green rectangle appears marking your annotation</li>
+                            <li>Repeat for all STN regions you identify</li>
+                        </ol>
+                        
+                        <div class="image-container" data-image="create_annotation.gif">
+                            <div class="image-placeholder">GIF: Creating an Annotation</div>
+                        </div>
+                        
+                        <div class="tip-box">
+                            <strong>STN Features to Look For:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>High-frequency oscillations (300-3000 Hz)</li>
+                                <li>Irregular, dense spike activity</li>
+                                <li>Increased background noise</li>
+                            </ul>
+                        </div>
+                        
+                        <p><strong>Useful Controls:</strong></p>
+                        <ul class="step-list">
+                            <li><strong>Amplitude Scale slider:</strong> Adjust vertical scaling to see signals better</li>
+                            <li><strong>🧽 Erase Mode:</strong> Click on annotations to delete them</li>
+                            <li><strong>Clear All button:</strong> Remove all annotations (with confirmation)</li>
+                        </ul>
+                        
+                        <div class="image-container" data-image="annotation_controls.png">
+                            <div class="image-placeholder">Screenshot: Annotation Controls</div>
+                        </div>
+                        
+                        <div class="image-container" data-image="adjust_amplitude.gif">
+                            <div class="image-placeholder">GIF: Adjusting Amplitude Scale</div>
+                        </div>
+                        
+                        <p>Your annotations appear in a list below the plot. When finished, click <strong>"Save & Continue"</strong>.</p>
+                    </div>
+                    
+                    <!-- Step 5 -->
+                    <div class="subsection">
+                        <h3>Step 5: Review AI Classification (Informed Review)</h3>
+                        <div class="info-box">
+                            <strong>Now you'll see:</strong> The AI's automatic classification with visual explanations showing where the AI focused to make its decision.
+                        </div>
+                        
+                        <div class="image-container" data-image="xai_interface.png">
+                            <div class="image-placeholder">Screenshot: XAI Review Interface</div>
+                        </div>
+                        
+                        <p><strong>Understanding the Visualization:</strong></p>
+                        
+                        <div class="subsection">
+                            <h4>1. Heatmap (Score-CAM):</h4>
+                            <ul class="step-list">
+                                <li><strong>Red/Yellow (warm) colors:</strong> Regions that strongly influenced the AI's decision</li>
+                                <li><strong>Blue/Purple (cool) colors:</strong> Regions with less influence</li>
+                                <li>This shows where the AI "looked" to classify the trajectory</li>
+                            </ul>
+                            
+                            <div class="image-container" data-image="heatmap_explanation.png">
+                                <div class="image-placeholder">Screenshot: Heatmap with Annotations</div>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h4>2. Probability Bars (right side):</h4>
+                            <ul class="step-list">
+                                <li><strong>Green bars:</strong> High STN probability (>50%)</li>
+                                <li><strong>Gold bars:</strong> Medium probability (45-50%)</li>
+                                <li><strong>Red bars:</strong> Low probability (<45%)</li>
+                                <li>Numbers show exact probability for each depth</li>
+                            </ul>
+                            
+                            <div class="image-container" data-image="probability_bars.png">
+                                <div class="image-placeholder">Screenshot: Probability Bars Close-up</div>
+                            </div>
+                        </div>
+                        
+                        <div class="subsection">
+                            <h4>3. Your Original Annotations:</h4>
+                            <p>Green rectangles show your annotations from the previous step. You can toggle them on/off to compare with the AI.</p>
+                        </div>
+                        
+                        <p><strong>Interactive Controls:</strong></p>
+                        <ul class="step-list">
+                            <li><strong>🔥 Show XAI Heatmap:</strong> Toggle the colored overlay on/off</li>
+                            <li><strong>Heatmap Opacity:</strong> Adjust transparency to see signals underneath</li>
+                            <li><strong>🟩 Show My Annotations:</strong> Show/hide your annotations</li>
+                            <li><strong>✏️ Annotation Mode:</strong> You can add or remove annotations after seeing the AI</li>
+                        </ul>
+                        
+                        <div class="image-container" data-image="xai_controls.png">
+                            <div class="image-placeholder">Screenshot: XAI Controls Panel</div>
+                        </div>
+                        
+                        <div class="image-container" data-image="toggle_heatmap.gif">
+                            <div class="image-placeholder">GIF: Toggling Heatmap and Annotations</div>
+                        </div>
+                        
+                        <div class="tip-box">
+                            <strong>What to Look For:</strong>
+                            <ul style="margin-top: 10px;">
+                                <li>Do the AI's highlighted regions match your annotations?</li>
+                                <li>Is the AI focusing on relevant STN features?</li>
+                                <li>Are there discrepancies between AI and your expert judgment?</li>
+                            </ul>
+                        </div>
+                        
+                        <p>After reviewing, you can refine your annotations. Any changes are saved separately as "informed annotations."</p>
+                    </div>
+                    
+                    <!-- Step 6 -->
+                    <div class="subsection">
+                        <h3>Step 6: Complete the Survey</h3>
+                        <p>Rate your agreement with 4 statements about the AI's performance for this trajectory.</p>
+                        
+                        <div class="image-container" data-image="survey.png">
+                            <div class="image-placeholder">Screenshot: Survey Questions</div>
+                        </div>
+                        
+                        <p>Use the 6-point scale:</p>
+                        <table>
+                            <tr>
+                                <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th>
+                            </tr>
+                            <tr>
+                                <td>Strongly Disagree</td>
+                                <td>Disagree</td>
+                                <td>Slightly Disagree</td>
+                                <td>Slightly Agree</td>
+                                <td>Agree</td>
+                                <td>Strongly Agree</td>
+                            </tr>
+                        </table>
+                        
+                        <div class="tip-box">
+                            <strong>Consider:</strong> Both the quality of the AI's explanations and the accuracy of its predictions when answering.
+                        </div>
+                    </div>
+                    
+                    <!-- Step 7 -->
+                    <div class="subsection">
+                        <h3>Step 7: Repeat for All Trajectories</h3>
+                        <p>After completing the survey, you'll return to the trajectory selection screen. Select the next trajectory and repeat steps 3-6 until all trajectories are completed.</p>
+                        
+                        <div class="image-container" data-image="progress_tracking.png">
+                            <div class="image-placeholder">Screenshot: Progress Tracking</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 8 -->
+                    <div class="subsection">
+                        <h3>Step 8: Final Survey</h3>
+                        <p>After completing all trajectories, you'll answer 6 overall questions about your experience with the AI system across all cases.</p>
+                        
+                        <div class="image-container" data-image="final_survey.png">
+                            <div class="image-placeholder">Screenshot: Final Survey</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 9 -->
+                    <div class="subsection">
+                        <h3>Step 9: Export Results</h3>
+                        <p>Review your statistics and download your results as a JSON file.</p>
+                        
+                        <div class="image-container" data-image="export.png">
+                            <div class="image-placeholder">Screenshot: Export Section with Statistics</div>
+                        </div>
+                        
+                        <ol class="step-list">
+                            <li>Review the summary statistics</li>
+                            <li>Check the JSON preview if desired</li>
+                            <li>Click <strong>"Download Results"</strong></li>
+                            <li>The file will be saved to your downloads folder</li>
+                        </ol>
+                        
+                        <div class="info-box">
+                            <strong>File Name:</strong> <code>xai_validation_results_[timestamp].json</code><br>
+                            This file contains all your annotations and survey responses.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tips & Troubleshooting -->
+            <div class="section" id="tips">
+                <h2 onclick="toggleSection(this)">
+                    <span>Tips & Troubleshooting</span>
+                    <span class="toggle-icon">▼</span>
+                </h2>
+                <div class="section-content">
+                    <div class="subsection">
+                        <h3>Best Practices:</h3>
+                        <ul class="step-list">
+                            <li>Work in a quiet environment with a good quality monitor</li>
+                            <li>Take breaks between trajectories to maintain focus</li>
+                            <li>Use the amplitude scale to better visualize low-amplitude signals</li>
+                            <li>Mark only high-confidence STN regions initially</li>
+                            <li>Compare the AI's focus with your clinical judgment</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3>Common Issues:</h3>
+                        
+                        <div class="info-box">
+                            <strong>Problem:</strong> Can't create annotations<br>
+                            <strong>Solution:</strong> Make sure ✏️ Annotation Mode is checked and 🧽 Erase Mode is unchecked. Try clicking and dragging more deliberately on the signal lines.
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>Problem:</strong> Heatmap not visible<br>
+                            <strong>Solution:</strong> Check that "🔥 Show XAI Heatmap" is enabled and increase the Heatmap Opacity slider.
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>Problem:</strong> Survey won't submit<br>
+                            <strong>Solution:</strong> Scroll through all questions to ensure every one is answered. Each question requires a selection.
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong>Problem:</strong> Files won't load<br>
+                            <strong>Solution:</strong> Ensure your JSON files are properly formatted. Try loading one file at a time to identify which file might have an issue.
+                        </div>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3>Quick Reference Checklist:</h3>
+                        <ul class="checklist">
+                            <li>Load trajectory files (JSON format)</li>
+                            <li>Complete participant profile</li>
+                            <li>Select first trajectory</li>
+                            <li>Create blind annotations</li>
+                            <li>Review AI explanation</li>
+                            <li>Refine annotations if needed</li>
+                            <li>Complete trajectory survey</li>
+                            <li>Repeat for all trajectories</li>
+                            <li>Complete final survey</li>
+                            <li>Download results</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="subsection">
+                        <h3>Important Notes:</h3>
+                        <div class="tip-box">
+                            <ul style="margin-top: 10px;">
+                                <li>All processing happens in your browser - no data is sent to external servers</li>
+                                <li>Use the navigation buttons in the interface (don't use browser back button)</li>
+                                <li>Download results before closing the browser tab</li>
+                                <li>Data is not saved between sessions - complete your study in one sitting or download partial results</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="navigation-bottom">
+                <p style="margin-bottom: 15px; color: #666;">Ready to begin? Open the validation tool and follow these steps!</p>
+                <a href="XAI_STIM_validation_tool.html" class="nav-btn">🚀 Open Validation Tool</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="expand-all-btn" id="expandBtn" onclick="toggleAll()">
+        Expand All ▼
+    </div>
+
+    <script>
+        let loadedImages = {};
+        let allExpanded = true;
+        
+        // Folder selection
+        document.getElementById('folderInput').addEventListener('change', function(e) {
+            const files = e.target.files;
+            loadedImages = {};
+            
+            for (let file of files) {
+                const fileName = file.name.toLowerCase();
+                if (fileName.match(/\.(jpg|jpeg|png|gif|webp)$/)) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        loadedImages[file.name] = event.target.result;
+                        updateImageCount();
+                        updateImages();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            document.getElementById('loadedStatus').classList.add('show');
+        });
+        
+        function updateImageCount() {
+            document.getElementById('imageCount').textContent = Object.keys(loadedImages).length;
+        }
+        
+        function startGuide() {
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('mainContent').classList.add('active');
+            updateImages();
+        }
+        
+        function updateImages() {
+            const containers = document.querySelectorAll('.image-container');
+            containers.forEach(container => {
+                const imageName = container.getAttribute('data-image');
+                if (imageName && loadedImages[imageName]) {
+                    container.innerHTML = `
+                        <img src="${loadedImages[imageName]}" alt="${imageName}">
+                        <div class="image-caption">${imageName}</div>
+                    `;
+                }
+            });
+        }
+        
+        function toggleSection(header) {
+            const section = header.parentElement;
+            section.classList.toggle('collapsed');
+        }
+        
+        function toggleAll() {
+            const sections = document.querySelectorAll('.section');
+            const btn = document.getElementById('expandBtn');
+            
+            if (allExpanded) {
+                sections.forEach(section => section.classList.add('collapsed'));
+                btn.textContent = 'Expand All ▼';
+            } else {
+                sections.forEach(section => section.classList.remove('collapsed'));
+                btn.textContent = 'Collapse All ▲';
+            }
+            
+            allExpanded = !allExpanded;
+        }
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Expand section if collapsed
+                    if (target.classList.contains('collapsed')) {
+                        target.classList.remove('collapsed');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
