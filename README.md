@@ -1,105 +1,267 @@
-# XAI-STIM
-EXplainable Artificial Intelligence for SubThalamic nucleus Intraoperative Mapping
+# XAI-STIM: Explainable AI for Subthalamic Nucleus Intraoperative Mapping
 
 <p align="center">
-  <img src="XAI-STIM_cover.svg" alt="XAI-STIM" width="100%">
+  <img src="results/main_figures/06_gradcam.png" alt="XAI-STIM Grad-CAM example" style="width:100%; height:auto;"/>
 </p>
 
-Code for *Interpretable Deep Learning for SubThalamic Nucleus Targeting from Microelectrode Recordings: A Multicentre Cross-Dataset Study*.
+Deep Brain Stimulation (DBS) of the Subthalamic Nucleus (STN) is an effective treatment for motor symptoms in people with Parkinson's disease. Accurate placement of the stimulating electrode is essential for obtaining the best therapeutic outcome. During surgery, Microelectrode Recordings (MERs) provide neurophysiological information that helps clinicians identify whether the electrode is inside or outside the STN.
 
-XAI-STIM classifies 1-second microelectrode-recording segments as inside or outside the subthalamic nucleus. The repository contains the proposed pipeline: preprocessing, patient-wise AiO and LODO protocols, model training, patient-level evaluation, and one-dimensional Grad-CAM.
+`XAI-STIM` is a deep-learning pipeline for classifying MERs as **inside the STN** or **outside the STN**. The model combines convolutional patch encoding, multi-head self-attention, and a multilayer perceptron. One-dimensional Grad-CAM maps provide sample-wise explanations of the model predictions and can be reviewed together with the MER trajectories and their physical recording depths.
 
-## Scope
+## What `XAI-STIM` does
 
-The manuscript uses 168 patients from three public datasets:
+1. Loads a NumPy signal matrix (`.npz`) and its metadata table (`.csv`).
+2. Prepares each MER using the same pipeline employed during model development:
+   - resampling to 10 kHz;
+   - division into one-second windows;
+   - row-wise z-score normalization;
+   - 200 Hz high-pass filtering;
+   - harmonic notch filtering from 250 to 2950 Hz.
+3. Classifies each window as outside-STN (`0`) or inside-STN (`1`).
+4. Computes class probabilities and classification metrics.
+5. Generates one-dimensional Grad-CAM relevance maps at the self-attention layer.
+6. Exports figures and provides an interactive tool for expert validation.
 
-| Dataset | Patients | Original sampling rate |
-| --- | ---: | ---: |
-| LeadPoint | 46 | 24 kHz |
-| NeuroSet | 36 | 20 kHz |
-| AlphaMap | 86 | 12 kHz |
+## Quick start
 
-Dataset-specific download and conversion adapters are intentionally deferred until the public archives and their exact layouts are finalized. The required interim format is described in [docs/data_format.md](docs/data_format.md).
+The complete sample workflow is available in [`main.ipynb`](main.ipynb). It uses the included [`sample_data.npz`](sample_data.npz), [`sample_meta.csv`](sample_meta.csv), overlap settings, and trained all-in-one model.
 
-## Installation
-
-Python 3.10 is the manuscript environment.
-
-```bash
-conda env create -f environment.yml
-conda activate xai-stim
-pip install -e .
-```
-
-For an exact pip environment, use `requirements-lock.txt`.
-
-## Reproduction workflow
-
-1. Arrange the three datasets in the canonical local format under `data/raw/`.
-2. Prepare harmonized 1-second segments:
-
-   ```bash
-   python scripts/prepare_data.py --raw data/raw --output data/processed
-   ```
-
-3. Reproduce the AiO experiment:
-
-   ```bash
-   python scripts/train_aio.py
-   python scripts/evaluate_xai_stim.py
-   ```
-
-4. Reproduce the three LODO experiments:
-
-   ```bash
-   python scripts/train_lodo.py --config configs/lodo_leadpoint.yaml
-   python scripts/evaluate_xai_stim.py --training-config configs/lodo_leadpoint.yaml
-   python scripts/train_lodo.py --config configs/lodo_neuroset.yaml
-   python scripts/evaluate_xai_stim.py --training-config configs/lodo_neuroset.yaml
-   python scripts/train_lodo.py --config configs/lodo_alphamap.yaml
-   python scripts/evaluate_xai_stim.py --training-config configs/lodo_alphamap.yaml
-   ```
-
-Run all four training configurations with:
+Python 3.10 or newer is recommended. Install the required packages with:
 
 ```bash
-python scripts/reproduce_xai_stim_results.py
+python -m pip install numpy pandas scipy matplotlib torch scikit-learn py7zr pyarrow jupyter
 ```
 
-The AiO patient assignments in `configs/aio.yaml` are the assignments used by the source pipeline. LODO keeps the held-out dataset entirely unseen and selects validation patients independently within each development dataset.
+Start Jupyter from the repository root:
 
-## Expected XAI-STIM results
+```bash
+jupyter notebook main.ipynb
+```
 
-Patient-level mean ± standard deviation reported in the manuscript:
+Run the notebook cells in order. The notebook performs:
 
-| Protocol | Test domain | AUC | F1-score | Sensitivity | Specificity |
-| --- | --- | ---: | ---: | ---: | ---: |
-| AiO | Overall | 92.2 ± 6.4% | 83.0 ± 12.3% | 82.0 ± 15.7% | 86.0 ± 11.2% |
-| LODO | LeadPoint | 83.7 ± 8.6% | 74.4 ± 8.9% | 89.8 ± 12.8% | 48.6 ± 13.7% |
-| LODO | NeuroSet | 90.3 ± 7.3% | 78.7 ± 16.8% | 75.3 ± 19.6% | 86.1 ± 8.9% |
-| LODO | AlphaMap | 90.3 ± 12.3% | 56.5 ± 35.4% | 49.9 ± 35.5% | 96.0 ± 6.6% |
+```text
+data import
+    ↓
+resampling to 10 kHz
+    ↓
+one-second windowing
+    ↓
+normalization and filtering
+    ↓
+XAI-STIM inference
+    ↓
+1D Grad-CAM generation
+```
 
-## Explainability
+The resulting figures are written to `results/main_figures/`:
 
-`scripts/generate_gradcam.py` computes one-dimensional Grad-CAM for the IN-STN logit from the attention output. It creates sample-level maps, combines long recordings window-by-window, applies Gaussian smoothing with σ = 500 samples, and probability-weights the result as in the supplied inference workflow. `scripts/analyse_xai_validation.py` computes DSC at the manuscript's 15% threshold and AUmC. No other saliency method or statistical analysis is included.
+- `01_raw_signals.png`
+- `02_resampling.png`
+- `03_windowing.png`
+- `04_processing.png`
+- `05_inference.png`
+- `06_gradcam.png`
 
-## Repository map
+Inference automatically uses CUDA when a compatible GPU is available and otherwise runs on the CPU.
 
-- `configs/`: manuscript experiment configurations.
-- `src/xai_stim/`: data, model, training, evaluation, and explainability code.
-- `scripts/`: command-line reproduction entry points.
-- `docs/`: data contract and protocol details.
-- `data/`: documentation and generated split manifests only; recordings are ignored.
-- `results/`: generated outputs only.
-- `tests/`: lightweight behavioral tests.
+## Repository structure
 
-Development-variant reconciliation is recorded in [docs/reproducibility_notes.md](docs/reproducibility_notes.md).
+```text
+XAI-STIM/
+├── main.ipynb
+├── sample_data.npz
+├── sample_meta.csv
+├── modules/
+│   ├── 01_data_preparation/
+│   │   ├── import_datasets.py
+│   │   ├── compute_overlap.py
+│   │   ├── processing.py
+│   │   └── split_data.py
+│   ├── 02_XAI-STIM/
+│   │   ├── xai_stim.py
+│   │   ├── inference.py
+│   │   ├── gradcam1D.py
+│   │   ├── compute_performances.py
+│   │   └── trained_models/
+│   │       ├── all_in_one.pt
+│   │       ├── leave_AlphaMap_out.pt
+│   │       ├── leave_LeadPoint_out.pt
+│   │       └── leave_NeuroSet_out.pt
+│   └── 03_expert_validation/
+│       ├── traj2json.py
+│       ├── sample_data.json
+│       └── XAI_STIM_validation_tool.html
+├── results/
+│   ├── overlap.csv
+│   ├── AiO_data_split.csv
+│   ├── AiO.csv
+│   ├── LODO.csv
+│   └── main_figures/
+├── 2026_XXX_XAI-STIM_v2.docx
+├── 2026_XXX_XAI-STIM_Supplementary_v2.docx
+└── README.md
+```
+
+## Files description
+
+### Sample workflow
+
+- `main.ipynb`: complete, figure-by-figure demonstration of data import, preprocessing, inference, performance calculation, and Grad-CAM generation.
+- `sample_data.npz`: MER signals from a representative patient hemisphere, stored as rows of a zero-padded matrix.
+- `sample_meta.csv`: metadata associated with the sample recordings.
+
+### Data preparation
+
+- `import_datasets.py`: downloads and standardizes the LeadPoint, NeuroSet, and AlphaMap datasets into paired NPZ/CSV files. A source URL must be configured for any dataset whose URL is not distributed in the script.
+- `compute_overlap.py`: calculates patient- and class-specific window overlaps to balance the number of training examples within patients and across datasets.
+- `processing.py`: contains the authoritative signal-loading, resampling, windowing, normalization, high-pass, and notch-filtering functions.
+- `split_data.py`: organizes processed patient folders into the all-in-one training, validation, and test partitions defined in `results/AiO_data_split.csv`.
+
+### Classification and explainability
+
+- `xai_stim.py`: defines the checkpoint-compatible XAI-STIM neural-network architecture.
+- `inference.py`: loads a trained checkpoint, applies the complete preprocessing pipeline, and returns class probabilities. It also supports batch validation exports.
+- `gradcam1D.py`: computes attention-layer one-dimensional Grad-CAM maps and provides the trajectory plotting function used by the sample notebook.
+- `compute_performances.py`: computes overall and patient-wise AUC, F1 score, sensitivity, and specificity from prediction tables.
+- `trained_models/`: contains the all-in-one checkpoint and the three leave-one-dataset-out checkpoints.
+
+### Expert validation
+
+- `traj2json.py`: converts an NPZ/CSV trajectory pair into the signal, prediction, and saliency JSON format required by the validation interface.
+- `XAI_STIM_validation_tool.html`: browser-based interface for loading trajectories, reviewing model explanations, annotating STN-typical regions, and exporting expert responses.
+- `sample_data.json`: ready-to-load example for the validation interface.
+
+### Results
+
+- `overlap.csv`: patient- and class-specific overlap values used for one-second window extraction.
+- `AiO_data_split.csv`: patient allocation and window counts for the all-in-one experiment.
+- `AiO.csv`: patient-wise all-in-one validation results.
+- `LODO.csv`: patient-wise leave-one-dataset-out validation results.
+- `main_figures/`: figures generated by the sample notebook.
+
+## Preparing custom data
+
+Each trajectory requires one `.npz` signal file and one `.csv` metadata file with matching names or explicitly supplied paths.
+
+### Signal matrix
+
+The NPZ file must contain a two-dimensional matrix with shape `N × M`, where:
+
+- `N` is the number of MERs;
+- `M` is the length of the longest MER in samples;
+- each MER occupies one row;
+- shorter recordings are zero-padded to `M`;
+- the unpadded length is stored in the metadata `length` column.
+
+The preferred NPZ key is `signals`. The repository loader also accepts the first array in the archive when this key is absent.
+
+### Metadata
+
+The CSV file must contain one row per signal and the following columns:
+
+- `patient`: patient identifier, for example `P018`;
+- `side`: hemisphere, `LEFT` or `RIGHT`;
+- `dataset`: dataset name used to infer the original sampling frequency;
+- `depth`: estimated distance from target in micrometres;
+- `electrode`: recording electrode identifier;
+- `length`: signal length in samples before zero-padding;
+- `class`: reference label, with `0` for outside-STN and `1` for inside-STN.
+
+Example:
+
+```csv
+patient,side,dataset,depth,electrode,length,class
+P018,LEFT,NeuroSet,-8000,Electrode1,100000,0
+P018,LEFT,NeuroSet,-2000,Electrode1,100000,1
+P018,LEFT,NeuroSet,4000,Electrode1,100000,0
+```
+
+The predefined dataset sampling frequencies are:
+
+| Dataset | Sampling frequency |
+|---|---:|
+| LeadPoint | 24 kHz |
+| NeuroSet | 20 kHz |
+| AlphaMap | 12 kHz |
+
+All signals are resampled to 10 kHz before classification.
+
+## Python API examples
+
+Because the module folders begin with numbers and contain a hyphen, add their paths before importing them directly:
+
+```python
+from pathlib import Path
+import sys
+
+root = Path("path/to/XAI-STIM")
+sys.path.insert(0, str(root / "modules" / "01_data_preparation"))
+sys.path.insert(0, str(root / "modules" / "02_XAI-STIM"))
+```
+
+### Classification
+
+Each input row passed to `inference` must represent one second sampled at 10 kHz. The function applies the training-time preprocessing internally.
+
+```python
+from processing import load_matrix
+from inference import inference
+
+windows = load_matrix(root / "path" / "to" / "windows.npz")
+probabilities = inference(windows)
+predicted_classes = probabilities.argmax(axis=1)
+```
+
+### Grad-CAM
+
+`gradcam1D` accepts complete recordings and resamples them when necessary:
+
+```python
+from gradcam1D import gradcam1D
+
+signals = load_matrix(root / "sample_data.npz")
+maps, probabilities = gradcam1D(
+    signals,
+    sampling_frequency=20000,
+    target_class=1,
+    return_probabilities=True,
+)
+```
+
+For the complete, executable workflow and plotting code, refer to `main.ipynb`.
+
+## Expert-validation interface
+
+Generate a validation trajectory from the sample files with:
+
+```bash
+python modules/03_expert_validation/traj2json.py
+```
+
+Then open `modules/03_expert_validation/XAI_STIM_validation_tool.html` in a web browser and select the generated JSON file. The interface supports trajectory review, manual annotation of STN-typical regions, comparison with Grad-CAM explanations, and JSON export of the expert responses.
 
 ## Citation
 
-Citation metadata is provided in [CITATION.cff](CITATION.cff). Update the provisional publication fields when the article receives its final bibliographic record.
+If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM publication. The complete bibliographic reference and DOI will be added upon publication.
 
-## License
+The open NeuroSet dataset used in this project is available at:
 
-Code is released under the MIT License. Dataset licenses and terms remain those of the original providers.
+Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2025). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo. https://doi.org/10.5281/zenodo.14894226
 
+## Contributing
+
+Contributions are welcome. When reporting a bug, please include:
+
+1. A concise and descriptive title.
+2. Your operating system and Python version.
+3. Whether `main.ipynb` runs successfully with the included sample data.
+4. The complete error message and the pipeline step where it occurred.
+
+## Contacts
+
+**Fabrizio Sciscenti**, Ph.D. Candidate — [BIOLAB@Polito](https://biolab.polito.it/people/fabrizio-sciscenti/)  
+[@FSciscenti](https://x.com/FSciscenti) — fabrizio.sciscenti@polito.it
+
+**Marco Ghislieri**, Ph.D. — [BIOLAB@Polito](https://biolab.polito.it/people/marco-ghislieri/)  
+[@MarcoGhislieri](https://twitter.com/MarcoGhislieri) — marco.ghislieri@polito.it
