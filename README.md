@@ -259,7 +259,7 @@ Contributions are welcome. When reporting a bug, please include:
 ## Contacts
 
 **Fabrizio Sciscenti**, Ph.D. Candidate — [BIOLAB@Polito](https://biolab.polito.it/people/fabrizio-sciscenti/)  
-[@FSciscenti](www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
+[@FSciscenti](https://www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
 
 **Marco Ghislieri**, Ph.D. — [BIOLAB@Polito](https://biolab.polito.it/people/marco-ghislieri/)  
 [@MarcoGhislieri](https://twitter.com/MarcoGhislieri) — marco.ghislieri@polito.it
