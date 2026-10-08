@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAI-STIM Validation Tool</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #6A1B9A; margin-bottom: 10px; font-size: 28px; }
+        h2 { color: #333; margin: 25px 0 15px 0; font-size: 20px; border-bottom: 2px solid #6A1B9A; padding-bottom: 5px; }
+        .section { display: none; animation: fadeIn 0.3s; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .info-box { background-color: #fff3e0; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ff9800; }
+        .controls { margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 5px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        button { padding: 10px 20px; background-color: #6A1B9A; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: bold; transition: background-color 0.3s; }
+        button:hover { background-color: #4A148C; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button.secondary { background-color: #757575; }
+        button.secondary:hover { background-color: #616161; }
+        button.danger { background-color: #d32f2f; }
+        button.danger:hover { background-color: #b71c1c; }
+        input[type="file"] { padding: 8px; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; }
+        input[type="range"] { width: 150px; }
+        input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+        label { font-weight: 500; cursor: pointer; }
+        #plotDiv, #plotDivXAI { width: 100%; height: 700px; margin: 20px 0; border: 1px solid #ddd; border-radius: 5px; }
+        .question-container { margin: 20px 0; padding: 15px; background: #fafafa; border-radius: 5px; border-left: 3px solid #6A1B9A; }
+        .question-text { font-weight: 500; margin-bottom: 10px; font-size: 15px; }
+        .yes-no-scale { display: flex; justify-content: flex-start; align-items: center; margin: 15px 0; gap: 30px; }
+        .yes-no-option { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .yes-no-option input[type="radio"] { width: 20px; height: 20px; cursor: pointer; }
+        .yes-no-option label { font-size: 14px; text-align: center; color: #333; font-weight: 500; }
+        .likert-scale { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+        .likert-option { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+        .likert-option input[type="radio"] { width: 20px; height: 20px; cursor: pointer; }
+        .likert-option label { font-size: 12px; text-align: center; color: #666; }
+        .profile-input { margin: 15px 0; }
+        .profile-input label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .profile-input input[type="text"], .profile-input input[type="number"], .profile-input select { width: 100%; max-width: 400px; padding: 8px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .navigation { margin-top: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin: 20px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #6A1B9A, #9C27B0); width: 0%; transition: width 0.3s; }
+        .annotations-list { max-height: 200px; overflow-y: auto; background: #f9f9f9; padding: 10px; border-radius: 5px; margin: 10px 0; }
+        .annotation-item { padding: 8px; background: white; margin: 5px 0; border-radius: 3px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #4caf50; }
+        .annotation-item button { padding: 5px 10px; font-size: 12px; }
+        .signal-selector { margin: 15px 0; }
+        .signal-item { padding: 12px; background: #f0f0f0; margin: 8px 0; border-radius: 5px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .signal-item:hover { background: #e0e0e0; }
+        .signal-item.selected { background: #e8f5e9; border-color: #4caf50; }
+        .signal-item.completed { background: #c8e6c9; }
+        .stats { display: flex; gap: 20px; margin: 15px 0; flex-wrap: wrap; }
+        .stat-box { padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; flex: 1; min-width: 150px; }
+        .stat-label { font-size: 12px; opacity: 0.9; }
+        .stat-value { font-size: 24px; font-weight: bold; margin-top: 5px; }
+        .export-section { margin: 20px 0; padding: 20px; background: #f0f4f8; border-radius: 8px; }
+        textarea { width: 100%; min-height: 150px; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-family: monospace; font-size: 12px; resize: vertical; }
+        .classification-result { padding: 15px; margin: 15px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .classification-result.stn { background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%); color: white; }
+        .classification-result.non-stn { background: linear-gradient(135deg, #f44336 0%, #e57373 100%); color: white; }
+        .confidence-bar { width: 200px; height: 20px; background: rgba(255,255,255,0.3); border-radius: 10px; overflow: hidden; }
+        .confidence-fill { height: 100%; background: white; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 XAI-STIM Validation Tool</h1>
+        <p style="color: #666; margin-bottom: 20px;">Expert validation tool for STN classification with explainable AI</p>
+        
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        
+        <!-- Section 0: Start & Load Data -->
+        <div id="section-start" class="section active">
+            <h2>📁 Load MERs</h2>
+            <div class="info-box">
+                <strong>Welcome!</strong> This tool helps validate automatic STN (SubThalamic Nucleus) classification 
+                using microelectrode recordings (MERs). You'll annotate signals, review AI explanations, and provide feedback.
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="trajectoryFiles">Select Trajectory Files (JSON):</label>
+                    <input type="file" id="trajectoryFiles" accept=".json" multiple>
+                </div>
+            </div>
+            
+            <div id="dataPreview" style="margin-top: 20px; display: none;">
+                <h3>Data Loaded Successfully ✓</h3>
+                <div class="stats">
+                    <div class="stat-box"><div class="stat-label">Trajectories</div><div class="stat-value" id="trajectoryCount">0</div></div>
+                    <div class="stat-box"><div class="stat-label">Profiling Questions</div><div class="stat-value" id="profilingQCount">0</div></div>
+                    <div class="stat-box"><div class="stat-label">Trajectory Survey</div><div class="stat-value" id="surveyQCount">0</div></div>
+                    <div class="stat-box"><div class="stat-label">Final Survey</div><div class="stat-value" id="finalSurveyQCount">0</div></div>
+                </div>
+            </div>
+            
+            <div class="navigation"><div></div><button id="startBtn" disabled>Start Study →</button></div>
+        </div>
+        
+        <!-- Section 1: Profiling -->
+        <div id="section-profiling" class="section">
+            <h2>👤 Participant Profile</h2>
+            <div class="info-box">Please provide some information about yourself and your experience.</div>
+            
+            <div class="profile-input"><label>Participant ID:</label><input type="text" id="participantId" placeholder="Enter your ID"></div>
+            <div class="profile-input">
+                <label>Gender:</label>
+                <select id="gender">
+                    <option value="">Select...</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+            </div>
+            <div class="profile-input">
+                <label>Specialization:</label>
+                <select id="specialization">
+                    <option value="">Select...</option>
+                    <option value="neurology">Neurology</option>
+                    <option value="neurosurgery">Neurosurgery</option>
+                    <option value="neurophysiology">Neurophysiology</option>
+                    <option value="clinical-psychology">Clinical Psychology</option>
+                    <option value="psychiatry">Psychiatry</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="profile-input"><label>Years of Experience:</label><input type="number" id="yearsExperience" min="0" max="50" placeholder="0"></div>
+            
+            <h3 style="margin-top: 30px; color: #6A1B9A;">AI Attitude Questions</h3>
+            <div id="aiAttitudeQuestions"></div>
+            
+            <div class="navigation">
+                <button class="secondary" onclick="previousSection()">← Back</button>
+                <button onclick="nextSection()">Continue →</button>
+            </div>
+        </div>
+        
+        <!-- Section 2: Trajectory Selection -->
+        <div id="section-selection" class="section">
+            <h2>📊 Select Trajectory for Annotation</h2>
+            <div class="info-box">Choose a trajectory to annotate. You'll mark regions that show STN-typical activity.</div>
+            <div id="signalList" class="signal-selector"></div>
+            <div class="navigation">
+                <button class="secondary" onclick="previousSection()">← Back</button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="skipToFinalBtn" disabled onclick="skipToFinalSurvey()" style="background-color: #ff9800;">Skip to Final Questionnaire →</button>
+                    <button id="selectSignalBtn" disabled onclick="loadSelectedSignal()">Annotate Trajectory →</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Section 3: Manual Annotation -->
+        <div id="section-annotation" class="section">
+            <h2>✏️ Manual Signal Annotation</h2>
+            <div class="info-box">
+                <strong>Instructions:</strong> Click and drag on the signal to mark regions showing STN-typical activity 
+                (high-frequency oscillations, irregular patterns). You can create multiple annotations per channel.
+            </div>
+            
+            <div class="controls">
+                <div class="control-group"><input type="checkbox" id="annotationMode" checked><label for="annotationMode">✏️ Annotation Mode</label></div>
+                <div class="control-group"><input type="checkbox" id="eraseMode"><label for="eraseMode">🧽 Erase Mode</label></div>
+                <div class="control-group"><label>Amplitude Scale:</label><input type="range" id="ampScale" min="0.1" max="3" step="0.1" value="1"><span id="ampScaleValue">1.0</span></div>
+                <div class="control-group"><label>Time Window (s):</label><input type="range" id="timeWindow" min="0.5" max="5" step="0.1" value="5"><span id="timeWindowValue">5.0</span></div>
+                <div class="control-group" id="windowNavigation">
+                    <button class="secondary" id="windowNavLeft" onclick="shiftTimeWindow(-1)">←</button>
+                    <button class="secondary" id="windowNavRight" onclick="shiftTimeWindow(1)">→</button>
+                </div>
+                <button class="secondary" onclick="clearAllAnnotations()">Clear All</button>
+            </div>
+            
+            <div id="plotDiv"></div>
+            
+            <div class="annotations-list">
+                <h3>Annotations (<span id="annotationCount">0</span>)</h3>
+                <div id="annotationsList"></div>
+            </div>
+            
+            <div class="navigation">
+                <button class="secondary" onclick="previousSection()">← Back</button>
+                <button onclick="finishAnnotation()">Save & Continue →</button>
+            </div>
+        </div>
+        
+        <!-- Section 4: XAI Review -->
+        <div id="section-xai" class="section">
+            <h2>🔍 Review AI Classification & Explanation</h2>
+            <div class="info-box">
+                <strong>Review the automatic classification:</strong> The heatmap shows Score-CAM explanations - 
+                warmer colors (red/yellow) indicate regions that strongly influenced the AI's decision.
+                Green bars show high STN probability (&gt;50%), gold is medium (&gt;45%), red is low.
+            </div>
+            
+            <div id="classificationResult" class="classification-result"></div>
+            
+            <div class="controls">
+                <div class="control-group"><input type="checkbox" id="annotationModeXAI" checked><label for="annotationModeXAI">✏️ Annotation Mode</label></div>
+                <div class="control-group"><input type="checkbox" id="eraseModeXAI"><label for="eraseModeXAI">🧽 Erase Mode</label></div>
+                <div class="control-group"><input type="checkbox" id="showManualAnnotations" checked><label for="showManualAnnotations">🟩 Show My Annotations</label></div>
+                <div class="control-group"><input type="checkbox" id="showHeatmap" checked><label for="showHeatmap">🔥 Show XAI Heatmap</label></div>
+                <div class="control-group"><label>Heatmap Opacity:</label><input type="range" id="heatmapOpacity" min="0" max="1" step="0.05" value="0.4"><span id="heatmapOpacityValue">0.4</span></div>
+                <div class="control-group"><label>Amplitude Scale:</label><input type="range" id="ampScaleXAI" min="0.1" max="3" step="0.1" value="1"><span id="ampScaleXAIValue">1.0</span></div>
+                <div class="control-group"><label>Time Window (s):</label><input type="range" id="timeWindowXAI" min="0.5" max="5" step="0.1" value="5"><span id="timeWindowXAIValue">5.0</span></div>
+                <div class="control-group" id="windowNavigationXAI">
+                    <button class="secondary" id="windowNavLeftXAI" onclick="shiftTimeWindowXAI(-1)">←</button>
+                    <button class="secondary" id="windowNavRightXAI" onclick="shiftTimeWindowXAI(1)">→</button>
+                </div>
+            </div>
+            
+            <div id="plotDivXAI"></div>
+            
+            <div class="annotations-list">
+                <h3>Annotations (<span id="annotationCountXAI">0</span>)</h3>
+                <div id="annotationsListXAI"></div>
+            </div>
+            
+            <div class="navigation">
+                <button class="secondary" onclick="previousSection()">← Back</button>
+                <button onclick="nextSection()">Continue to Survey →</button>
+            </div>
+        </div>
+        
+        <!-- Section 5: Survey -->
+        <div id="section-survey" class="section">
+            <h2>📝 Feedback Survey</h2>
+            <div class="info-box">Please rate your agreement with the following statements about the AI system and explanations.</div>
+            <div id="surveyQuestions"></div>
+            <div class="navigation">
+                <button class="secondary" onclick="previousSection()">← Back</button>
+                <button onclick="nextSection()">Continue →</button>
+            </div>
+        </div>
+        
+        <!-- Section 6: Final Survey -->
+        <div id="section-final-survey" class="section">
+            <h2>📝 Final Overall Feedback</h2>
+            <div class="info-box">
+                <strong>All trajectories completed!</strong> Please provide your overall feedback on the AI system and explanations across all trajectories.
+            </div>
+            <div id="finalSurveyQuestions"></div>
+            <div class="navigation">
+                <button class="secondary" onclick="previousSection()">← Back</button>
+                <button onclick="nextSection()">Continue →</button>
+            </div>
+        </div>
+        
+        <!-- Section 7: Export Results -->
+        <div id="section-export" class="section">
+            <h2>💾 Export Results</h2>
+            <div class="info-box"><strong>Study Complete!</strong> Review and download your annotations and responses.</div>
+            
+            <div class="stats">
+                <div class="stat-box"><div class="stat-label">Trajectories Annotated</div><div class="stat-value" id="statsAnnotated">0</div></div>
+                <div class="stat-box"><div class="stat-label">Total Annotations</div><div class="stat-value" id="statsTotalAnnotations">0</div></div>
+                <div class="stat-box"><div class="stat-label">Survey Responses</div><div class="stat-value" id="statsSurveyResponses">0</div></div>
+            </div>
+            
+            <div class="export-section">
+                <h3>Results JSON</h3>
+                <textarea id="resultsJson" readonly></textarea>
+                <button onclick="downloadResults()">Download Results</button>
+            </div>
+            
+            <div class="navigation">
+                <button class="secondary" onclick="previousSection()">← Back</button>
+                <button onclick="resetStudy()">Start New Study</button>
+            </div>
+        </div>
+    </div>
+
+    <!--%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%-->
+
+    <script>
+        let trajectoryFiles = [];
+        let profilingQuestions = [];
+        let surveyQuestions = [];
+        let finalSurveyQuestions = [];
+        let currentSection = 0;
+        let currentTrajectoryIndex = 0;
+        let annotations = {}; // Blind annotations (initial)
+        let annotationsInformed = {}; // Informed annotations (after seeing XAI)
+        let profileData = {};
+        let surveyResponses = {};
+        let finalSurveyResponses = {};
+        let completedTrajectories = new Set();
+        let currentWindowStart = 0; // For annotation plot
+        let currentWindowStartXAI = 0; // For XAI plot
+
+        const sections = ['start', 'profiling', 'selection', 'annotation', 'xai', 'survey', 'final-survey', 'export'];
+
+        // // Auto-load question files
+        // async function loadQuestionFiles() {
+        //     try {
+        //         const resp = await fetch('profiling_questions.json');
+        //         if (resp.ok) { const data = await resp.json(); profilingQuestions = data.questions; }
+        //     } catch (e) { console.log('Profiling questions not found'); }
+            
+        //     try {
+        //         const resp = await fetch('survey_questions.json');
+        //         if (resp.ok) { const data = await resp.json(); surveyQuestions = data.questions; }
+        //     } catch (e) { console.log('Survey questions not found'); }
+        // }
+
+        async function loadQuestionFiles() {
+            // Embedded fallback
+            profilingQuestions = [
+                "Do you have good knowledge of Artificial Intelligence (AI)?",
+                "Do you have experience using AI systems in neurosurgery?",
+                "Do you believe that AI can help you answer questions more accurately and quickly when you are uncertain of the answer?",
+                "Do you believe that using AI (such as a virtual assistant) to help you with work or study can increase your productivity?",
+                "Do you believe that AI can help you improve the effectiveness of your work?",
+                "Have you heard about eXplainable AI (XAI)?"
+            ];
+            
+            surveyQuestions = [
+                "The areas marked by the XAI method correspond with the regions of interest for the identification of STN activity.",
+                "The XAI method marks irrelevant segments as relevant.",
+                "The XAI method highlights the relevant segments precisely.",
+                "The AI classifies the microelectrode recordings correctly."
+            ];
+            
+            // Final survey (shown after all trajectories completed)
+            finalSurveyQuestions = [
+                "The explanation of the XAI method is transparent and understandable.",
+                "The AI classification simplifies the evaluation process of the trajectory.",
+                "The use of AI leads to a more consistent STN classification by different medical practitioner.",
+                "The XAI method supports the comprehensibility of the AI results.",
+                "The XAI method supports the trustworthiness of the AI classification.",
+                "The explanations of the XAI methods were generally helpful.",
+            ];
+        }
+
+        window.addEventListener('DOMContentLoaded', loadQuestionFiles);
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            // Initialize participant ID with current date/time (ddmmyy_hhmm)
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = String(now.getFullYear()).slice(-2);
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const participantId = `${day}${month}${year}_${hours}${minutes}`;
+            document.getElementById('participantId').value = participantId;
+        });
+
+        // Load trajectory files
+        document.getElementById('trajectoryFiles').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            trajectoryFiles = [];
+            let filesLoaded = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const trajectory = JSON.parse(event.target.result);
+                        trajectoryFiles.push(trajectory);
+                        filesLoaded++;
+                        
+                        if (filesLoaded === files.length) {
+                            displayDataPreview();
+                            document.getElementById('startBtn').disabled = false;
+                        }
+                    } catch (error) {
+                        alert('Error loading ' + files[i].name + ': ' + error.message);
+                    }
+                };
+                reader.readAsText(files[i]);
+            }
+        });
+
+        function displayDataPreview() {
+            document.getElementById('dataPreview').style.display = 'block';
+            document.getElementById('trajectoryCount').textContent = trajectoryFiles.length;
+            document.getElementById('profilingQCount').textContent = profilingQuestions.length;
+            document.getElementById('surveyQCount').textContent = surveyQuestions.length;
+            document.getElementById('finalSurveyQCount').textContent = finalSurveyQuestions.length;
+        }
+
+        document.getElementById('startBtn').addEventListener('click', () => nextSection());
+
+        function nextSection() {
+            if (currentSection === 1 && !validateProfiling()) { alert('Please complete all required fields'); return; }
+            if (currentSection === 1) saveProfiling();
+            if (currentSection === 3) {
+                const tid = trajectoryFiles[currentTrajectoryIndex].id;
+                if (!annotations[tid] || annotations[tid].length === 0) {
+                    if (!confirm('No annotations created. Continue anyway?')) return;
+                }
+            }
+            if (currentSection === 5 && !validateSurvey()) { alert('Please answer all survey questions'); return; }
+            if (currentSection === 5) {
+                saveSurvey();
+                // Mark current trajectory as completed
+                completedTrajectories.add(trajectoryFiles[currentTrajectoryIndex].id);
+                
+                // Check if there are more trajectories to process
+                if (completedTrajectories.size < trajectoryFiles.length) {
+                    // Go back to trajectory selection
+                    currentSection = 2;
+                    showSection();
+                    initSignalSelection();
+                    return;
+                }
+            }
+            if (currentSection === 6 && !validateFinalSurvey()) { alert('Please answer all final survey questions'); return; }
+            if (currentSection === 6) saveFinalSurvey();
+
+            currentSection++;
+            if (currentSection >= sections.length) currentSection = sections.length - 1;
+            showSection();
+            
+            if (currentSection === 1) initProfiling();
+            if (currentSection === 2) initSignalSelection();
+            if (currentSection === 4) initXAIReview();
+            if (currentSection === 5) initSurvey();
+            if (currentSection === 6) initFinalSurvey();
+            if (currentSection === 7) initExport();
+        }
+
+        function previousSection() {
+            currentSection--;
+            if (currentSection < 0) currentSection = 0;
+            showSection();
+        }
+
+        function showSection() {
+            sections.forEach((section, index) => {
+                const elem = document.getElementById(`section-${section}`);
+                if (elem) elem.classList.toggle('active', index === currentSection);
+            });
+            updateProgress();
+        }
+
+        function updateProgress() {
+            document.getElementById('progressFill').style.width = (currentSection / (sections.length - 1)) * 100 + '%';
+        }
+
+        // Profiling
+        function initProfiling() {
+            if (!profilingQuestions || profilingQuestions.length === 0) return;
+            const container = document.getElementById('aiAttitudeQuestions');
+            container.innerHTML = '';
+            profilingQuestions.forEach((question, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'question-container';
+                qDiv.innerHTML = `<div class="question-text">${index + 1}. ${question}</div>`;
+                qDiv.appendChild(createYesNoScale(`prof_${index}`));
+                container.appendChild(qDiv);
+            });
+        }
+
+        function createYesNoScale(name) {
+            const labels = ['Yes', 'No'];
+            const div = document.createElement('div');
+            div.className = 'yes-no-scale';
+            labels.forEach((label, index) => {
+                const option = document.createElement('div');
+                option.className = 'yes-no-option';
+                const radio = document.createElement('input');
+                radio.type = 'radio'; radio.name = name; radio.value = index; radio.id = `${name}_${index}`;
+                const lbl = document.createElement('label');
+                lbl.htmlFor = `${name}_${index}`; lbl.textContent = label;
+                option.appendChild(radio); option.appendChild(lbl); div.appendChild(option);
+            });
+            return div;
+        }
+
+        function createLikertScale(name) {
+            const labels = ['Strongly Disagree', 'Disagree', 'Slightly Disagree', 'Slightly Agree', 'Agree', 'Strongly Agree'];
+            const div = document.createElement('div');
+            div.className = 'likert-scale';
+            labels.forEach((label, index) => {
+                const option = document.createElement('div');
+                option.className = 'likert-option';
+                const radio = document.createElement('input');
+                radio.type = 'radio'; radio.name = name; radio.value = index + 1; radio.id = `${name}_${index}`;
+                const lbl = document.createElement('label');
+                lbl.htmlFor = `${name}_${index}`; lbl.textContent = label;
+                option.appendChild(radio); option.appendChild(lbl); div.appendChild(option);
+            });
+            return div;
+        }
+
+        function validateProfiling() {
+            if (!document.getElementById('participantId').value || !document.getElementById('gender').value || !document.getElementById('specialization').value) return false;
+            for (let i = 0; i < profilingQuestions.length; i++) {
+                if (!document.querySelector(`input[name="prof_${i}"]:checked`)) return false;
+            }
+            return true;
+        }
+
+        function saveProfiling() {
+            profileData = {
+                participantId: document.getElementById('participantId').value,
+                yearsExperience: parseInt(document.getElementById('yearsExperience').value) || 0,
+                gender: document.getElementById('gender').value,
+                specialization: document.getElementById('specialization').value,
+                aiAttitudes: {}
+            };
+            for (let i = 0; i < profilingQuestions.length; i++) {
+                const checked = document.querySelector(`input[name="prof_${i}"]:checked`);
+                if (checked) profileData.aiAttitudes[`q${i}`] = parseInt(checked.value);
+            }
+        }
+
+        // Trajectory Selection
+        function initSignalSelection() {
+            const container = document.getElementById('signalList');
+            container.innerHTML = '';
+            
+            const remainingCount = trajectoryFiles.length - completedTrajectories.size;
+            if (remainingCount > 0) {
+                const infoDiv = document.createElement('div');
+                infoDiv.style.marginBottom = '15px';
+                infoDiv.style.padding = '10px';
+                infoDiv.style.background = '#e3f2fd';
+                infoDiv.style.borderRadius = '5px';
+                infoDiv.innerHTML = `<strong>Progress:</strong> ${completedTrajectories.size} of ${trajectoryFiles.length} trajectories completed. ${remainingCount} remaining.`;
+                container.appendChild(infoDiv);
+            }
+            
+            trajectoryFiles.forEach((trajectory, index) => {
+                const item = document.createElement('div');
+                item.className = 'signal-item';
+                const isCompleted = completedTrajectories.has(trajectory.id);
+                
+                if (isCompleted) {
+                    item.classList.add('completed');
+                    item.style.opacity = '0.6';
+                    item.style.cursor = 'not-allowed';
+                }
+                
+                item.innerHTML = `
+                    <strong>${trajectory.name}</strong> ${isCompleted ? '✓ Completed' : ''}<br>
+                    <span style="font-size: 12px; color: #666;">
+                        ${trajectory.signals.length} channels, ${trajectory.signals[0].length} samples @ ${trajectory.sampling_rate}Hz
+                        ${annotations[trajectory.id] ? ` - ${annotations[trajectory.id].length} annotations` : ''}
+                    </span>
+                `;
+                
+                if (!isCompleted) {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.signal-item').forEach(i => i.classList.remove('selected'));
+                        item.classList.add('selected');
+                        currentTrajectoryIndex = index;
+                        document.getElementById('selectSignalBtn').disabled = false;
+                    });
+                }
+                
+                container.appendChild(item);
+            });
+            
+            // Disable select button initially
+            document.getElementById('selectSignalBtn').disabled = true;
+            
+            // Enable skip button if at least one trajectory is completed
+            const skipBtn = document.getElementById('skipToFinalBtn');
+            if (skipBtn) {
+                skipBtn.disabled = completedTrajectories.size === 0;
+                if (completedTrajectories.size > 0) {
+                    skipBtn.style.backgroundColor = '#ff9800';
+                } else {
+                    skipBtn.style.backgroundColor = '#ccc';
+                }
+            }
+        }
+
+        function loadSelectedSignal() { 
+            currentWindowStart = 0; // Reset window position
+            nextSection(); 
+            plotSignalForAnnotation(); 
+        }
+
+        function skipToFinalSurvey() {
+            if (completedTrajectories.size === 0) {
+                alert('Please complete at least one trajectory before proceeding to the final questionnaire.');
+                return;
+            }
+            // Jump directly to final survey section (index 6)
+            currentSection = 6;
+            showSection();
+            initFinalSurvey();
+        }
+
+        // Annotation
+        function plotSignalForAnnotation() {
+            const trajectory = trajectoryFiles[currentTrajectoryIndex];
+            const tid = trajectory.id;
+            if (!annotations[tid]) annotations[tid] = [];
+            
+            const traces = [];
+            const numRecs = trajectory.signals.length;
+            const depths = trajectory.depths || trajectory.signals.map((_, i) => i * 0.5);
+            const ampScale = parseFloat(document.getElementById('ampScale').value);
+            const numSamples = trajectory.signals[0].length;
+            const totalDuration = numSamples / trajectory.sampling_rate;
+            const timeWindow = parseFloat(document.getElementById('timeWindow').value);
+            
+            // Update time window max to match signal duration
+            document.getElementById('timeWindow').max = totalDuration.toFixed(1);
+            if (timeWindow > totalDuration) {
+                document.getElementById('timeWindow').value = totalDuration;
+                document.getElementById('timeWindowValue').textContent = totalDuration.toFixed(1);
+            }
+            
+            // Enable/disable navigation arrows
+            const leftBtn = document.getElementById('windowNavLeft');
+            const rightBtn = document.getElementById('windowNavRight');
+            if (timeWindow < totalDuration) {
+                leftBtn.disabled = false;
+                rightBtn.disabled = false;
+                // Ensure window doesn't go beyond signal
+                if (currentWindowStart + timeWindow > totalDuration) {
+                    currentWindowStart = totalDuration - timeWindow;
+                }
+            } else {
+                leftBtn.disabled = true;
+                rightBtn.disabled = true;
+                currentWindowStart = 0;
+            }
+            
+            const timeAxis = Array.from({length: numSamples}, (_, i) => i / trajectory.sampling_rate);
+
+            const ampUnit = computeAmpUnit(trajectory.signals);
+            
+            for (let i = 0; i < numRecs; i++) {
+                const yOffset = -i;
+                const normalizedData = normalizeRec(trajectory.signals[i], ampUnit, ampScale);
+                traces.push({
+                    x: timeAxis, y: normalizedData.map(v => v + yOffset),
+                    type: 'scatter', mode: 'lines', line: { color: 'black', width: 1 },
+                    name: `${depths[i].toFixed(1)}mm`,
+                    hoverinfo: 'skip'
+                });
+            }
+            
+            const shapes = annotations[tid].map(ann => ({
+                type: 'rect', x0: ann.startTime, x1: ann.endTime,
+                y0: -ann.rec - 0.4, y1: -ann.rec + 0.4,
+                fillcolor: 'rgba(76, 175, 80, 0.3)', line: { color: 'rgba(76, 175, 80, 0.8)', width: 2 }
+            }));
+            
+            const layout = {
+                title: `Trajectory: ${trajectory.name} - Manual Annotation`,
+                xaxis: { 
+                    title: 'Time (s)',
+                    range: [currentWindowStart, currentWindowStart + timeWindow]
+                },
+                yaxis: { 
+                    title: 'Depth (mm)',
+                    tickvals: Array.from({length: numRecs}, (_, i) => -i),
+                    ticktext: depths.map(d => d.toFixed(1)),
+                    range: [-numRecs, 1]
+                },
+                shapes: shapes, hovermode: 'closest', dragmode: 'select', showlegend: false
+            };
+            
+            const config = { displayModeBar: false };
+            Plotly.newPlot('plotDiv', traces, layout, config);
+            setupAnnotationHandlers('plotDiv', tid);
+            updateAnnotationsList(tid);
+        }
+
+        function computeAmpUnit(signals) { //Median of std devs across channels
+            const stdValues = [];
+            signals.forEach(rec => {
+                const channelStd = Math.sqrt(rec.reduce((a, b) => a + b*b, 0) / rec.length);
+                stdValues.push(channelStd);
+            });
+            stdValues.sort((a, b) => a - b);
+            const mid = Math.floor(stdValues.length / 2);
+            const medianStd = stdValues.length % 2 === 0 
+                ? (stdValues[mid - 1] + stdValues[mid]) / 2 
+                : stdValues[mid];
+            return medianStd || 1;
+        }
+
+        function normalizeRec(data, ampUnit, scale) {
+            return data.map(v => (v / ampUnit) * 0.1 * scale);
+        }
+
+        function normalizeChannel(data, scale) {
+            const mean = data.reduce((a, b) => a + b, 0) / data.length;
+            const std = Math.sqrt(data.reduce((a, b) => a + (b - mean) ** 2, 0) / data.length);
+            return data.map(v => ((v - mean) / (std || 1)) * 0.4 * scale);
+        }
+
+        function setupAnnotationHandlers(plotId, tid, isInformed = false) {
+            const plotDiv = document.getElementById(plotId);
+            const eraseModeCheckbox = isInformed ? 'eraseModeXAI' : 'eraseMode';
+            const annotationModeCheckbox = isInformed ? 'annotationModeXAI' : 'annotationMode';
+            const targetAnnotations = isInformed ? annotationsInformed : annotations;
+            const replotFunction = isInformed ? plotXAIReview : plotSignalForAnnotation;
+            
+            // Add click handler directly to the plot div for shape clicks
+            plotDiv.onclick = function(event) {
+                if (!document.getElementById(eraseModeCheckbox).checked) return;
+                
+                const layout = plotDiv._fullLayout;
+                if (!layout) return;
+                
+                const xaxis = layout.xaxis;
+                const yaxis = layout.yaxis;
+                
+                // Get the bounding box of the plot area
+                const plotBounds = plotDiv.getBoundingClientRect();
+                
+                // Convert click coordinates to data coordinates
+                const xPixel = event.clientX - plotBounds.left;
+                const yPixel = event.clientY - plotBounds.top;
+                
+                // Calculate data coordinates from pixel position
+                const xPercent = (xPixel - xaxis._offset) / xaxis._length;
+                const yPercent = (yPixel - yaxis._offset) / yaxis._length;
+                
+                const xRange = xaxis.range[1] - xaxis.range[0];
+                const yRange = yaxis.range[1] - yaxis.range[0];
+                
+                const x = xaxis.range[0] + xPercent * xRange;
+                const y = yaxis.range[1] - yPercent * yRange;
+                
+                const rec = Math.round(-y);
+                
+                // Find and delete annotation at this position
+                const index = targetAnnotations[tid].findIndex(ann => 
+                    ann.rec === rec && x >= ann.startTime && x <= ann.endTime
+                );
+                
+                if (index !== -1) { 
+                    targetAnnotations[tid].splice(index, 1); 
+                    replotFunction(); 
+                    event.stopPropagation();
+                }
+            };
+            
+            plotDiv.on('plotly_selected', function(data) {
+                if (!document.getElementById(annotationModeCheckbox).checked) return;
+                if (!data || !data.range || !data.range.x) return;
+                
+                const xRange = data.range.x;
+                let rec = 0;
+                
+                // Try to determine trace from selected points
+                if (data.points && data.points.length > 0) {
+                    // Use the y-coordinate of the first selected point to determine the trace
+                    const firstPoint = data.points[0];
+                    rec = Math.round(-firstPoint.y);
+                } else if (data.range.y) {
+                    // Fallback to range midpoint
+                    const yMid = (data.range.y[0] + data.range.y[1]) / 2;
+                    rec = Math.round(-yMid);
+                }
+                
+                if (!targetAnnotations[tid]) targetAnnotations[tid] = [];
+                targetAnnotations[tid].push({
+                    rec: rec,
+                    startTime: Math.min(xRange[0], xRange[1]),
+                    endTime: Math.max(xRange[0], xRange[1])
+                });
+                replotFunction();
+            });
+            
+            // Update cursor style based on mode
+            plotDiv.addEventListener('mousemove', function(event) {
+                if (document.getElementById(eraseModeCheckbox).checked) {
+                    plotDiv.style.cursor = 'pointer';
+                } else if (document.getElementById(annotationModeCheckbox).checked) {
+                    plotDiv.style.cursor = 'crosshair';
+                } else {
+                    plotDiv.style.cursor = 'default';
+                }
+            });
+        }
+
+        function updateAnnotationsList(tid) {
+            const container = document.getElementById('annotationsList');
+            const anns = annotations[tid] || [];
+            document.getElementById('annotationCount').textContent = anns.length;
+            container.innerHTML = '';
+            anns.forEach((ann, index) => {
+                const div = document.createElement('div');
+                div.className = 'annotation-item';
+                div.innerHTML = `
+                    <span>Trace ${ann.rec}: ${ann.startTime.toFixed(3)}s - ${ann.endTime.toFixed(3)}s</span>
+                    <button class="danger" onclick="deleteAnnotation(${index})">Delete</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function deleteAnnotation(index) {
+            const tid = trajectoryFiles[currentTrajectoryIndex].id;
+            annotations[tid].splice(index, 1);
+            plotSignalForAnnotation();
+        }
+
+        function clearAllAnnotations() {
+            if (!confirm('Clear all annotations for this trajectory?')) return;
+            annotations[trajectoryFiles[currentTrajectoryIndex].id] = [];
+            plotSignalForAnnotation();
+        }
+
+        function finishAnnotation() { nextSection(); }
+
+        document.getElementById('ampScale').addEventListener('input', function(e) {
+            document.getElementById('ampScaleValue').textContent = e.target.value;
+            plotSignalForAnnotation();
+        });
+
+        document.getElementById('timeWindow').addEventListener('input', function(e) {
+            document.getElementById('timeWindowValue').textContent = e.target.value;
+            currentWindowStart = 0; // Reset to start when changing window size
+            plotSignalForAnnotation();
+        });
+
+        function shiftTimeWindow(direction) {
+            const trajectory = trajectoryFiles[currentTrajectoryIndex];
+            const totalDuration = trajectory.signals[0].length / trajectory.sampling_rate;
+            const timeWindow = parseFloat(document.getElementById('timeWindow').value);
+            const step = timeWindow * 0.1; // Shift by 10% of window
+            
+            currentWindowStart += direction * step;
+            currentWindowStart = Math.max(0, Math.min(currentWindowStart, totalDuration - timeWindow));
+            plotSignalForAnnotation();
+        }
+
+        document.getElementById('annotationMode').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.getElementById('eraseMode').checked = false;
+            }
+        });
+
+        document.getElementById('eraseMode').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.getElementById('annotationMode').checked = false;
+            }
+        });
+
+        function updateAnnotationsListXAI(tid) {
+            const container = document.getElementById('annotationsListXAI');
+            const anns = annotationsInformed[tid] || [];
+            document.getElementById('annotationCountXAI').textContent = anns.length;
+            container.innerHTML = '';
+            anns.forEach((ann, index) => {
+                const div = document.createElement('div');
+                div.className = 'annotation-item';
+                div.innerHTML = `
+                    <span>Trace ${ann.rec}: ${ann.startTime.toFixed(3)}s - ${ann.endTime.toFixed(3)}s</span>
+                    <button class="danger" onclick="deleteAnnotationXAI(${index})">Delete</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function deleteAnnotationXAI(index) {
+            const tid = trajectoryFiles[currentTrajectoryIndex].id;
+            annotationsInformed[tid].splice(index, 1);
+            plotXAIReview();
+        }
+
+        function clearAllAnnotationsXAI() {
+            if (!confirm('Clear all annotations for this trajectory?')) return;
+            annotationsInformed[trajectoryFiles[currentTrajectoryIndex].id] = [];
+            plotXAIReview();
+        }
+
+        // XAI Review
+        function initXAIReview() {
+            const trajectory = trajectoryFiles[currentTrajectoryIndex];
+            const tid = trajectory.id;
+            const resultDiv = document.getElementById('classificationResult');
+            
+            // Reset window position
+            currentWindowStartXAI = 0;
+            
+            // Copy blind annotations to informed (if not already done)
+            if (!annotationsInformed[tid]) {
+                annotationsInformed[tid] = JSON.parse(JSON.stringify(annotations[tid] || []));
+            }
+            
+            // Set XAI amplitude scale to match annotation scale
+            const annotationAmpScale = document.getElementById('ampScale').value;
+            document.getElementById('ampScaleXAI').value = annotationAmpScale;
+            document.getElementById('ampScaleXAIValue').textContent = annotationAmpScale;
+            
+            // Set XAI time window to match annotation window
+            const annotationTimeWindow = document.getElementById('timeWindow').value;
+            document.getElementById('timeWindowXAI').value = annotationTimeWindow;
+            document.getElementById('timeWindowXAIValue').textContent = annotationTimeWindow;
+            
+            // Hide overall classification display
+            resultDiv.style.display = 'none';
+            
+            plotXAIReview();
+        }
+
+        function plotXAIReview() {
+            const trajectory = trajectoryFiles[currentTrajectoryIndex];
+            const tid = trajectory.id;
+            const showHeatmap = document.getElementById('showHeatmap').checked;
+            const showAnnotations = document.getElementById('showManualAnnotations').checked;
+            const heatmapOpacity = parseFloat(document.getElementById('heatmapOpacity').value);
+            const ampScale = parseFloat(document.getElementById('ampScaleXAI').value);
+            
+            const numSamples = trajectory.signals[0].length;
+            const totalDuration = numSamples / trajectory.sampling_rate;
+            const timeWindow = parseFloat(document.getElementById('timeWindowXAI').value);
+            
+            // Update time window max to match signal duration
+            document.getElementById('timeWindowXAI').max = totalDuration.toFixed(1);
+            if (timeWindow > totalDuration) {
+                document.getElementById('timeWindowXAI').value = totalDuration;
+                document.getElementById('timeWindowXAIValue').textContent = totalDuration.toFixed(1);
+            }
+            
+            // Enable/disable navigation arrows
+            const leftBtn = document.getElementById('windowNavLeftXAI');
+            const rightBtn = document.getElementById('windowNavRightXAI');
+            if (timeWindow < totalDuration) {
+                leftBtn.disabled = false;
+                rightBtn.disabled = false;
+                // Ensure window doesn't go beyond signal
+                if (currentWindowStartXAI + timeWindow > totalDuration) {
+                    currentWindowStartXAI = totalDuration - timeWindow;
+                }
+            } else {
+                leftBtn.disabled = true;
+                rightBtn.disabled = true;
+                currentWindowStartXAI = 0;
+            }
+            
+            // Ensure informed annotations exist
+            if (!annotationsInformed[tid]) {
+                annotationsInformed[tid] = JSON.parse(JSON.stringify(annotations[tid] || []));
+            }
+            
+            const traces = [];
+            const numChannels = trajectory.signals.length;
+            const depths = trajectory.depths || trajectory.signals.map((_, i) => i * 0.5);
+            const timeAxis = Array.from({length: numSamples}, (_, i) => i / trajectory.sampling_rate);
+            
+            if (showHeatmap && trajectory.saliency) {
+                const heatmapSamples = trajectory.saliency[0].length;
+                const heatmapTimeAxis = Array.from({length: heatmapSamples}, (_, i) => i * (timeAxis[timeAxis.length-1] / (heatmapSamples-1)));
+                traces.push({
+                    x: heatmapTimeAxis,
+                    y: Array.from({length: numChannels}, (_, i) => -i),
+                    z: trajectory.saliency,
+                    type: 'heatmap', colorscale: 'Jet', opacity: heatmapOpacity,
+                    showscale: true, hoverinfo: 'skip'
+                });
+            }
+            
+            const ampUnit = computeAmpUnit(trajectory.signals);
+            for (let i = 0; i < numChannels; i++) {
+                const normalizedData = normalizeRec(trajectory.signals[i], ampUnit, ampScale);
+                traces.push({
+                    x: timeAxis, y: normalizedData.map(v => v - i),
+                    type: 'scatter', mode: 'lines', line: { color: 'black', width: 1 },
+                    name: `${depths[i].toFixed(1)}mm`,
+                    hoverinfo: 'skip'
+                });
+            }
+            
+            const shapes = [];
+            if (showAnnotations && annotationsInformed[tid]) {
+                annotationsInformed[tid].forEach(ann => {
+                    shapes.push({
+                        type: 'rect', x0: ann.startTime, x1: ann.endTime,
+                        y0: -ann.rec - 0.4, y1: -ann.rec + 0.4,
+                        fillcolor: 'rgba(76, 175, 80, 0)', line: { color: 'rgba(76, 175, 80, 1.0)', width: 2 }
+                    });
+                });
+            }
+            
+            const textAnnotations = [];
+            if (trajectory.channel_probabilities) {
+                trajectory.channel_probabilities.forEach((prob, i) => {
+                    let color = prob > 0.5 ? 'rgba(76, 175, 80, 0.5)' : prob > 0.45 ? 'rgba(255, 193, 7, 0.5)' : 'rgba(244, 67, 54, 0.5)';
+                    shapes.push({
+                        type: 'rect',
+                        x0: timeAxis[timeAxis.length - 1] * 1.01,
+                        x1: timeAxis[timeAxis.length - 1] * (1.01 + prob * 0.1),
+                        y0: -i - 0.3, y1: -i + 0.3,
+                        fillcolor: color, line: { width: 0 }
+                    });
+                    // Add text annotation with probability value
+                    textAnnotations.push({
+                        x: timeAxis[timeAxis.length - 1] * (1.01 + prob * 0.1 + 0.005),
+                        y: -i,
+                        text: prob.toFixed(2),
+                        showarrow: false,
+                        font: { size: 10, color: 'black' },
+                        xanchor: 'left'
+                    });
+                });
+            }
+            
+            // Calculate x-axis range - extend to include classification bars if they exist
+            const maxTime = timeAxis[timeAxis.length - 1];
+            let xAxisMax = currentWindowStartXAI + timeWindow;
+            if (trajectory.channel_probabilities && (currentWindowStartXAI + timeWindow) >= maxTime * 0.9) {
+                // If we're viewing near the end, extend range to show classification bars
+                xAxisMax = Math.max(currentWindowStartXAI + timeWindow, maxTime * 1.12);
+            }
+            
+            const layout = {
+                title: `${trajectory.name} - AI Classification & Explanation`,
+                xaxis: { 
+                    title: 'Time (s)',
+                    range: [currentWindowStartXAI, xAxisMax]
+                },
+                yaxis: { 
+                    title: 'Depth (mm)',
+                    tickvals: Array.from({length: numChannels}, (_, i) => -i),
+                    ticktext: depths.map(d => d.toFixed(1)),
+                    range: [-numChannels, 1]
+                },
+                shapes: shapes, annotations: textAnnotations, hovermode: 'closest', dragmode: 'select', showlegend: false
+            };
+            
+            const config = { displayModeBar: false };
+            Plotly.newPlot('plotDivXAI', traces, layout, config);
+            setupAnnotationHandlers('plotDivXAI', tid, true);
+            updateAnnotationsListXAI(tid);
+        }
+
+        document.getElementById('showHeatmap').addEventListener('change', plotXAIReview);
+        document.getElementById('showManualAnnotations').addEventListener('change', plotXAIReview);
+        document.getElementById('heatmapOpacity').addEventListener('input', function(e) {
+            document.getElementById('heatmapOpacityValue').textContent = e.target.value;
+            plotXAIReview();
+        });
+        document.getElementById('ampScaleXAI').addEventListener('input', function(e) {
+            document.getElementById('ampScaleXAIValue').textContent = e.target.value;
+            plotXAIReview();
+        });
+        
+        document.getElementById('timeWindowXAI').addEventListener('input', function(e) {
+            document.getElementById('timeWindowXAIValue').textContent = e.target.value;
+            currentWindowStartXAI = 0; // Reset to start when changing window size
+            plotXAIReview();
+        });
+
+        function shiftTimeWindowXAI(direction) {
+            const trajectory = trajectoryFiles[currentTrajectoryIndex];
+            const totalDuration = trajectory.signals[0].length / trajectory.sampling_rate;
+            const timeWindow = parseFloat(document.getElementById('timeWindowXAI').value);
+            const step = timeWindow * 0.1; // Shift by 10% of window
+            
+            currentWindowStartXAI += direction * step;
+            currentWindowStartXAI = Math.max(0, Math.min(currentWindowStartXAI, totalDuration - timeWindow));
+            plotXAIReview();
+        }
+        
+        document.getElementById('annotationModeXAI').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.getElementById('eraseModeXAI').checked = false;
+            }
+        });
+
+        document.getElementById('eraseModeXAI').addEventListener('change', function(e) {
+            if (e.target.checked) {
+                document.getElementById('annotationModeXAI').checked = false;
+            }
+        });
+
+        // Survey
+        function initSurvey() {
+            if (!surveyQuestions || surveyQuestions.length === 0) return;
+            const container = document.getElementById('surveyQuestions');
+            container.innerHTML = '';
+            
+            // Add trajectory context
+            const trajectory = trajectoryFiles[currentTrajectoryIndex];
+            const contextDiv = document.createElement('div');
+            contextDiv.style.marginBottom = '20px';
+            contextDiv.style.padding = '15px';
+            contextDiv.style.background = '#e8f5e9';
+            contextDiv.style.borderRadius = '5px';
+            contextDiv.innerHTML = `<strong>Evaluating:</strong> ${trajectory.name} (${completedTrajectories.size + 1} of ${trajectoryFiles.length})`;
+            container.appendChild(contextDiv);
+            
+            surveyQuestions.forEach((question, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'question-container';
+                qDiv.innerHTML = `<div class="question-text">${index + 1}. ${question}</div>`;
+                qDiv.appendChild(createLikertScale(`survey_${index}`));
+                container.appendChild(qDiv);
+            });
+        }
+
+        function validateSurvey() {
+            for (let i = 0; i < surveyQuestions.length; i++) {
+                if (!document.querySelector(`input[name="survey_${i}"]:checked`)) return false;
+            }
+            return true;
+        }
+
+        function saveSurvey() {
+            const tid = trajectoryFiles[currentTrajectoryIndex].id;
+            if (!surveyResponses[tid]) surveyResponses[tid] = {};
+            
+            for (let i = 0; i < surveyQuestions.length; i++) {
+                const checked = document.querySelector(`input[name="survey_${i}"]:checked`);
+                if (checked) surveyResponses[tid][`q${i}`] = parseInt(checked.value);
+            }
+        }
+
+        // Final Survey
+        function initFinalSurvey() {
+            if (!finalSurveyQuestions || finalSurveyQuestions.length === 0) return;
+            const container = document.getElementById('finalSurveyQuestions');
+            container.innerHTML = '';
+            
+            finalSurveyQuestions.forEach((question, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'question-container';
+                qDiv.innerHTML = `<div class="question-text">${index + 1}. ${question}</div>`;
+                qDiv.appendChild(createLikertScale(`finalsurvey_${index}`));
+                container.appendChild(qDiv);
+            });
+        }
+
+        function validateFinalSurvey() {
+            for (let i = 0; i < finalSurveyQuestions.length; i++) {
+                if (!document.querySelector(`input[name="finalsurvey_${i}"]:checked`)) return false;
+            }
+            return true;
+        }
+
+        function saveFinalSurvey() {
+            finalSurveyResponses = {};
+            for (let i = 0; i < finalSurveyQuestions.length; i++) {
+                const checked = document.querySelector(`input[name="finalsurvey_${i}"]:checked`);
+                if (checked) finalSurveyResponses[`q${i}`] = parseInt(checked.value);
+            }
+        }
+
+        // Export
+        function initExport() {
+            const annotatedTrajectories = Object.keys(annotations).filter(k => annotations[k] && annotations[k].length > 0).length;
+            const totalAnnotations = Object.values(annotations).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
+            const totalSurveyResponses = Object.keys(surveyResponses).reduce((sum, tid) => sum + Object.keys(surveyResponses[tid]).length, 0);
+            
+            document.getElementById('statsAnnotated').textContent = annotatedTrajectories;
+            document.getElementById('statsTotalAnnotations').textContent = totalAnnotations;
+            document.getElementById('statsSurveyResponses').textContent = totalSurveyResponses;
+            
+            const results = {
+                timestamp: new Date().toISOString(),
+                profile: profileData,
+                trajectories: trajectoryFiles.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    annotationsBlind: annotations[t.id] || [],
+                    annotationsInformed: annotationsInformed[t.id] || [],
+                    surveyResponses: surveyResponses[t.id] || {}
+                })),
+                finalSurvey: finalSurveyResponses,
+                metadata: {
+                    totalTrajectories: trajectoryFiles.length,
+                    completedTrajectories: completedTrajectories.size,
+                    totalAnnotations: totalAnnotations,
+                    totalSurveyResponses: totalSurveyResponses
+                }
+            };
+            
+            document.getElementById('resultsJson').value = JSON.stringify(results, null, 2);
+        }
+
+        function downloadResults() {
+            const results = document.getElementById('resultsJson').value;
+            const blob = new Blob([results], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `xai_validation_results_${new Date().toISOString().replace(/:/g, '-')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetStudy() {
+            if (!confirm('Start a new study? All current data will be lost.')) return;
+            annotations = {}; annotationsInformed = {}; profileData = {}; surveyResponses = {}; finalSurveyResponses = {}; completedTrajectories = new Set();
+            currentSection = 0; currentTrajectoryIndex = 0;
+            showSection();
+        }
+    </script>
+</body>
+</html>

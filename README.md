@@ -1,4 +1,4 @@
-# XAI-STIM: Explainable AI for Subthalamic Nucleus Intraoperative Mapping
+# XAI-STIM: eXplainable Artificial Intelligence for SubThalamic nucleus Intraoperative Mapping
 
 <p align="center">
   <img src="results/main_figures/06_gradcam.png" alt="XAI-STIM Grad-CAM example" style="width:100%; height:auto;"/>
@@ -6,36 +6,30 @@
 
 Deep Brain Stimulation (DBS) of the Subthalamic Nucleus (STN) is an effective treatment for motor symptoms in people with Parkinson's disease. Accurate placement of the stimulating electrode is essential for obtaining the best therapeutic outcome. During surgery, Microelectrode Recordings (MERs) provide neurophysiological information that helps clinicians identify whether the electrode is inside or outside the STN.
 
-`XAI-STIM` is a deep-learning pipeline for classifying MERs as **inside the STN** or **outside the STN**. The model combines convolutional patch encoding, multi-head self-attention, and a multilayer perceptron. One-dimensional Grad-CAM maps provide sample-wise explanations of the model predictions and can be reviewed together with the MER trajectories and their physical recording depths.
+`XAI-STIM` is a deep-learning pipeline for classifying MERs as **inside the STN** or **outside the STN**. The model combines convolutional patch encoding, multi-head self-attention, and a multilayer perceptron. One-dimensional Grad-CAM maps provide explanations of the model predictions and can be reviewed together with the MER trajectories.
 
 ## What `XAI-STIM` does
 
 1. Loads a NumPy signal matrix (`.npz`) and its metadata table (`.csv`).
-2. Prepares each MER using the same pipeline employed during model development:
+2. Prepares each MER using the pipeline described in [1]:
    - resampling to 10 kHz;
    - division into one-second windows;
-   - row-wise z-score normalization;
+   - z-score normalization;
    - 200 Hz high-pass filtering;
-   - harmonic notch filtering from 250 to 2950 Hz.
+   - notch filtering at higher harmonics of 50 Hz.
 3. Classifies each window as outside-STN (`0`) or inside-STN (`1`).
 4. Computes class probabilities and classification metrics.
-5. Generates one-dimensional Grad-CAM relevance maps at the self-attention layer.
-6. Exports figures and provides an interactive tool for expert validation.
+5. Generates one-dimensional Grad-CAM relevance maps.
+6. Exports figures and provides an interactive tool for explanations validation.
 
 ## Quick start
 
-The complete sample workflow is available in [`main.ipynb`](main.ipynb). It uses the included [`sample_data.npz`](sample_data.npz), [`sample_meta.csv`](sample_meta.csv), overlap settings, and trained all-in-one model.
+The complete sample workflow is available in [`main.ipynb`](main.ipynb). It uses the included [`sample_data.npz`](sample_data.npz), [`sample_meta.csv`](sample_meta.csv), and trained model.
 
 Python 3.10 or newer is recommended. Install the required packages with:
 
 ```bash
-python -m pip install numpy pandas scipy matplotlib torch scikit-learn py7zr pyarrow jupyter
-```
-
-Start Jupyter from the repository root:
-
-```bash
-jupyter notebook main.ipynb
+python -m pip install numpy pandas scipy matplotlib torch scikit-learn py7zr pyarrow
 ```
 
 Run the notebook cells in order. The notebook performs:
@@ -107,29 +101,29 @@ XAI-STIM/
 
 ### Sample workflow
 
-- `main.ipynb`: complete, figure-by-figure demonstration of data import, preprocessing, inference, performance calculation, and Grad-CAM generation.
+- `main.ipynb`: complete demonstration of data import, preprocessing, inference, performance calculation, and Grad-CAM generation.
 - `sample_data.npz`: MER signals from a representative patient hemisphere, stored as rows of a zero-padded matrix.
 - `sample_meta.csv`: metadata associated with the sample recordings.
 
 ### Data preparation
 
-- `import_datasets.py`: downloads and standardizes the LeadPoint, NeuroSet, and AlphaMap datasets into paired NPZ/CSV files. A source URL must be configured for any dataset whose URL is not distributed in the script.
+- `import_datasets.py`: downloads and standardizes the *LeadPoint*, *NeuroSet*, and *AlphaMap* datasets into paired NPZ/CSV files.
 - `compute_overlap.py`: calculates patient- and class-specific window overlaps to balance the number of training examples within patients and across datasets.
-- `processing.py`: contains the authoritative signal-loading, resampling, windowing, normalization, high-pass, and notch-filtering functions.
+- `processing.py`: contains the signal-loading, resampling, windowing, normalization, high-pass, and notch-filtering functions.
 - `split_data.py`: organizes processed patient folders into the all-in-one training, validation, and test partitions defined in `results/AiO_data_split.csv`.
 
 ### Classification and explainability
 
-- `xai_stim.py`: defines the checkpoint-compatible XAI-STIM neural-network architecture.
+- `xai_stim.py`: defines the XAI-STIM neural-network architecture.
 - `inference.py`: loads a trained checkpoint, applies the complete preprocessing pipeline, and returns class probabilities. It also supports batch validation exports.
-- `gradcam1D.py`: computes attention-layer one-dimensional Grad-CAM maps and provides the trajectory plotting function used by the sample notebook.
+- `gradcam1D.py`: computes one-dimensional Grad-CAM maps and provides the trajectory plotting function used by the sample notebook.
 - `compute_performances.py`: computes overall and patient-wise AUC, F1 score, sensitivity, and specificity from prediction tables.
 - `trained_models/`: contains the all-in-one checkpoint and the three leave-one-dataset-out checkpoints.
 
 ### Expert validation
 
 - `traj2json.py`: converts an NPZ/CSV trajectory pair into the signal, prediction, and saliency JSON format required by the validation interface.
-- `XAI_STIM_validation_tool.html`: browser-based interface for loading trajectories, reviewing model explanations, annotating STN-typical regions, and exporting expert responses.
+- `XAI_STIM_validation_tool.html`: browser-based interface for loading trajectories, reviewing model explanations, annotating STN-typical regions, and exporting expert responses to Likert-scale questionnaires.
 - `sample_data.json`: ready-to-load example for the validation interface.
 
 ### Results
@@ -153,8 +147,6 @@ The NPZ file must contain a two-dimensional matrix with shape `N × M`, where:
 - each MER occupies one row;
 - shorter recordings are zero-padded to `M`;
 - the unpadded length is stored in the metadata `length` column.
-
-The preferred NPZ key is `signals`. The repository loader also accepts the first array in the archive when this key is absent.
 
 ### Metadata
 
@@ -187,9 +179,9 @@ The predefined dataset sampling frequencies are:
 
 All signals are resampled to 10 kHz before classification.
 
-## Python API examples
+## Python examples
 
-Because the module folders begin with numbers and contain a hyphen, add their paths before importing them directly:
+Add the modules paths:
 
 ```python
 from pathlib import Path
@@ -202,7 +194,7 @@ sys.path.insert(0, str(root / "modules" / "02_XAI-STIM"))
 
 ### Classification
 
-Each input row passed to `inference` must represent one second sampled at 10 kHz. The function applies the training-time preprocessing internally.
+Each input row passed to `inference` must represent one second sampled at 10 kHz. The function applies the preprocessing internally.
 
 ```python
 from processing import load_matrix
@@ -245,9 +237,13 @@ Then open `modules/03_expert_validation/XAI_STIM_validation_tool.html` in a web 
 
 If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM publication. The complete bibliographic reference and DOI will be added upon publication.
 
-The open NeuroSet dataset used in this project is available at:
+[1] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. *Interpretable Deep Learning for SubThalamic Nucleus Targeting from Microelectrode Recordings: A Multicentre Cross-Dataset Study* - *under review*
 
-Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2025). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo. https://doi.org/10.5281/zenodo.14894226
+The open datasets used in this project are available at:
+
+[2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2025). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo. https://doi.org/10.5281/zenodo.14894226
+[3] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings*. Mendeley Data, V1. https://doi.org/10.17632/tr93krswn2.1
+[4] *AlphaMap reference* - *TBD*
 
 ## Contributing
 
@@ -261,7 +257,7 @@ Contributions are welcome. When reporting a bug, please include:
 ## Contacts
 
 **Fabrizio Sciscenti**, Ph.D. Candidate — [BIOLAB@Polito](https://biolab.polito.it/people/fabrizio-sciscenti/)  
-[@FSciscenti](https://x.com/FSciscenti) — fabrizio.sciscenti@polito.it
+[@FSciscenti](www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
 
 **Marco Ghislieri**, Ph.D. — [BIOLAB@Polito](https://biolab.polito.it/people/marco-ghislieri/)  
 [@MarcoGhislieri](https://twitter.com/MarcoGhislieri) — marco.ghislieri@polito.it

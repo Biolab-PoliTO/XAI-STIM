@@ -1,0 +1,12 @@
+patient,side,dataset,depth,electrode,length,class
+P018,LEFT,NeuroSet,-8000,Electrode1,100000,0
+P018,LEFT,NeuroSet,-6000,Electrode1,100000,0
+P018,LEFT,NeuroSet,-4000,Electrode1,100000,0
+P018,LEFT,NeuroSet,-3000,Electrode1,100000,0
+P018,LEFT,NeuroSet,-2000,Electrode1,100000,1
+P018,LEFT,NeuroSet,-1000,Electrode1,100000,1
+P018,LEFT,NeuroSet,0,Electrode1,100000,1
+P018,LEFT,NeuroSet,1000,Electrode1,100000,1
+P018,LEFT,NeuroSet,2000,Electrode1,100000,1
+P018,LEFT,NeuroSet,3000,Electrode1,100000,1
+P018,LEFT,NeuroSet,4000,Electrode1,100000,0
