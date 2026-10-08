@@ -242,7 +242,9 @@ If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM pu
 The open datasets used in this project are available at:
 
 [2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2025). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo. https://doi.org/10.5281/zenodo.14894226
+
 [3] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings*. Mendeley Data, V1. https://doi.org/10.17632/tr93krswn2.1
+
 [4] *AlphaMap reference* - *TBD*
 
 ## Contributing
