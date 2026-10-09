@@ -89,11 +89,7 @@ XAI-STIM/
 ├── results/
 │   ├── overlap.csv
 │   ├── AiO_data_split.csv
-│   ├── AiO.csv
-│   ├── LODO.csv
 │   └── main_figures/
-├── 2026_XXX_XAI-STIM_v2.docx
-├── 2026_XXX_XAI-STIM_Supplementary_v2.docx
 └── README.md
 ```
 
@@ -237,13 +233,12 @@ Then open `modules/03_expert_validation/XAI_STIM_validation_tool.html` in a web 
 
 If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM publication. The complete bibliographic reference and DOI will be added upon publication.
 
-[1] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. *Interpretable Deep Learning for SubThalamic Nucleus Targeting from Microelectrode Recordings: A Multicentre Cross-Dataset Study* - *under review*
+[1] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. *Interpretable Deep Learning for SubThalamic Nucleus Targeting from Microelectrode Recordings: A Multicentre Cross-Dataset Study* - *submitted for publication*
 
 The open datasets used in this project are available at:
 
-[2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2025). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo. https://doi.org/10.5281/zenodo.14894226
-[3] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings*. Mendeley Data, V1. https://doi.org/10.17632/tr93krswn2.1
-[4] *AlphaMap reference* - *TBD*
+[2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2026). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo, v2. https://doi.org/10.5281/zenodo.23259894
+[3] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
 
 ## Contributing
 
@@ -256,8 +251,8 @@ Contributions are welcome. When reporting a bug, please include:
 
 ## Contacts
 
-**Fabrizio Sciscenti**, Ph.D. Candidate — [BIOLAB@Polito](https://biolab.polito.it/people/fabrizio-sciscenti/)  
-[@FSciscenti](www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
+**Fabrizio Sciscenti**, Ph.D. Candidate — [Polito](https://www.polito.it/personale?p=fabrizio.sciscenti)  
+[@FabrizioSciscenti](https://www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
 
-**Marco Ghislieri**, Ph.D. — [BIOLAB@Polito](https://biolab.polito.it/people/marco-ghislieri/)  
-[@MarcoGhislieri](https://twitter.com/MarcoGhislieri) — marco.ghislieri@polito.it
+**Marco Ghislieri**, Ph.D. — [Polito](https://www.polito.it/personale?p=marco.ghislieri)  
+[@MarcoGhislieri](https://www.linkedin.com/in/marco-ghislieri/) — marco.ghislieri@polito.it
