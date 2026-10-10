@@ -239,7 +239,6 @@ The open datasets used in this project are available at:
 
 [2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2026). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo, v2. https://doi.org/10.5281/zenodo.23259894
 [3] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
-[4] *AlphaMap reference* - *TBD*
 
 ## Contributing
 
@@ -252,8 +251,8 @@ Contributions are welcome. When reporting a bug, please include:
 
 ## Contacts
 
-**Fabrizio Sciscenti**, Ph.D. Candidate — [BIOLAB@Polito](https://biolab.polito.it/people/fabrizio-sciscenti/)  
-[@FSciscenti](https://www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
+**Fabrizio Sciscenti**, Ph.D. Candidate — [H-MoVe](https://www.polito.it/en/staff?p=fabrizio.sciscenti)  
+[@FabrizioSciscenti](https://www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
 
-**Marco Ghislieri**, Ph.D. — [Polito](https://www.polito.it/personale?p=marco.ghislieri)  
+**Marco Ghislieri**, Ph.D. — [H-MoVe](https://www.polito.it/en/staff?p=marco.ghislieri)  
 [@MarcoGhislieri](https://www.linkedin.com/in/marco-ghislieri/) — marco.ghislieri@polito.it

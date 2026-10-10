@@ -7,7 +7,7 @@ matrix and one metadata table for each patient hemisphere.
 Author: Fabrizio Sciscenti 
         H-MoVe, Department of Electronics and Telecommunications, Politecnico di Torino
         fabrizio.sciscenti@polito.it
-Last updated: 7 October 2026
+Last updated: 10 October 2026
 """
 
 import shutil
@@ -22,8 +22,7 @@ import py7zr
 
 # Open-data links
 LEADPOINT_URL = "https://data.mendeley.com/public-api/zip/tr93krswn2/download/1"
-NEUROSET_URL = "https://zenodo.org/records/14894226/files/dataset.zip?download=1"
-ALPHAMAP_URL = None  # Add the Zenodo dataset.zip URL when available.
+NEUROSET_ALPHAMAP_URL = "https://zenodo.org/records/23259894/files/dataset_v2.zip?download=1"
 
 ROOT = Path(__file__).resolve().parents[2]
 DOWNLOADS = ROOT / "dataset" / ".downloads" 
@@ -144,15 +143,21 @@ def import_LeadPoint():
         path.unlink()
 
 
-def import_npz_dataset(dataset, url):
-    """Import a NeuroSet/AlphaMap dataset.zip containing NPZ/CSV pairs."""
-    cache = DOWNLOADS / dataset
-    archive = download(url, cache / "dataset.zip")
-    source = cache / "dataset"
-    if not source.exists():
-        source.mkdir(parents=True)
+def import_npz_dataset(dataset):
+    """Import one dataset from the shared NeuroSet/AlphaMap Zenodo archive."""
+    cache = DOWNLOADS / "NeuroSet_AlphaMap"
+    archive = download(NEUROSET_ALPHAMAP_URL, cache / "dataset_v2.zip")
+    source = cache / "dataset_v2"
+    marker = source / ".complete"
+    if not marker.exists():
+        source.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(archive) as compressed:
             compressed.extractall(source)
+        marker.touch()
+
+    source = next((path for path in source.rglob(dataset) if path.is_dir()), None)
+    if source is None:
+        raise FileNotFoundError(f"{dataset}/ not found in {archive}")
 
     for csv_path in sorted(source.rglob("*.csv")):
         npz_path = csv_path.with_suffix(".npz")
@@ -170,17 +175,11 @@ def import_npz_dataset(dataset, url):
 
 
 def import_NeuroSet():
-    if NEUROSET_URL:
-        import_npz_dataset("NeuroSet", NEUROSET_URL)
-    else:
-        print("NeuroSet skipped: add its Zenodo dataset.zip URL to NEUROSET_URL.")
+    import_npz_dataset("NeuroSet")
 
 
 def import_AlphaMap():
-    if ALPHAMAP_URL:
-        import_npz_dataset("AlphaMap", ALPHAMAP_URL)
-    else:
-        print("AlphaMap skipped: add its Zenodo dataset.zip URL to ALPHAMAP_URL.")
+    import_npz_dataset("AlphaMap")
 
 
 def compute_stats():
