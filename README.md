@@ -234,11 +234,13 @@ Then open `modules/03_expert_validation/XAI_STIM_validation_tool.html` in a web 
 If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM publication. The complete bibliographic reference and DOI will be added upon publication.
 
 [1] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. *Interpretable Deep Learning for SubThalamic Nucleus Targeting from Microelectrode Recordings: A Multicentre Cross-Dataset Study* - *submitted for publication*
+
 [2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., Ghislieri, M. (2026). *Validation of an Interpretable AI System for Localizing the SubThalamic Nucleus During DBS Neurosurgery*. Artificial Intelligence in Medicine (AIME) 2026. https://doi.org/10.1007/978-3-032-30710-1_30
 
 The open datasets used in this project are available at:
 
 [3] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2026). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo, v2. https://doi.org/10.5281/zenodo.23259894
+
 [4] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
 
 ## Contributing
