@@ -254,8 +254,8 @@ Contributions are welcome. When reporting a bug, please include:
 
 ## Contacts
 
-**Fabrizio Sciscenti**, Ph.D. Candidate — [H-MoVe](https://www.polito.it/en/staff?p=fabrizio.sciscenti)  
+**Fabrizio Sciscenti**, Ph.D. Candidate — [H-MoVe@PoliTO](https://www.polito.it/en/staff?p=fabrizio.sciscenti)  
 [@FabrizioSciscenti](https://www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
 
-**Marco Ghislieri**, Ph.D. — [H-MoVe](https://www.polito.it/en/staff?p=marco.ghislieri)  
+**Marco Ghislieri**, Ph.D. — [H-MoVe@PoliTO](https://www.polito.it/en/staff?p=marco.ghislieri)  
 [@MarcoGhislieri](https://www.linkedin.com/in/marco-ghislieri/) — marco.ghislieri@polito.it
