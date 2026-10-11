@@ -241,7 +241,7 @@ def run_all_validations(batch_size=256, device=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Run all XAI-STIM validation inferences")
-    parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--batch-size", type=int, default=10)
     parser.add_argument("--device", choices=("cpu", "cuda"))
     arguments = parser.parse_args()
     run_all_validations(arguments.batch_size, arguments.device)
