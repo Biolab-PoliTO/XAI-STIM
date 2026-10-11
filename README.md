@@ -250,17 +250,6 @@ If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM pu
 
 [1] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. *Interpretable Deep Learning for SubThalamic Nucleus Targeting from Microelectrode Recordings: A Multicentre Cross-Dataset Study* - *submitted for publication*
 
-<<<<<<< Updated upstream
-[2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., Ghislieri, M. (2026). *Validation of an Interpretable AI System for Localizing the SubThalamic Nucleus During DBS Neurosurgery*. Artificial Intelligence in Medicine (AIME) 2026. https://doi.org/10.1007/978-3-032-30710-1_30
-
-The open datasets used in this project are available at:
-
-[3] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2026). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo, v2. https://doi.org/10.5281/zenodo.23259894
-
-[4] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
-
-=======
->>>>>>> Stashed changes
 ## Contributing
 
 Contributions are welcome. When reporting a bug, please include:
@@ -272,8 +261,8 @@ Contributions are welcome. When reporting a bug, please include:
 
 ## Contacts
 
-**Fabrizio Sciscenti**, Ph.D. Candidate — [H-MoVe@PoliTO](https://www.polito.it/en/staff?p=fabrizio.sciscenti)  
+**Fabrizio Sciscenti**, Ph.D. Candidate — [H-MoVe](https://www.polito.it/en/staff?p=fabrizio.sciscenti)  
 [@FabrizioSciscenti](https://www.linkedin.com/in/fabrizio-sciscenti-250573311) — fabrizio.sciscenti@polito.it
 
-**Marco Ghislieri**, Ph.D. — [H-MoVe@PoliTO](https://www.polito.it/en/staff?p=marco.ghislieri)  
+**Marco Ghislieri**, Ph.D. — [H-MoVe](https://www.polito.it/en/staff?p=marco.ghislieri)  
 [@MarcoGhislieri](https://www.linkedin.com/in/marco-ghislieri/) — marco.ghislieri@polito.it
