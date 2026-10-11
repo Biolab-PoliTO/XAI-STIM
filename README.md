@@ -48,8 +48,8 @@ The resulting figures are written to `results/main_figures/`:
 
 - `01_raw_signals.png`
 - `02_processed_signals.png`
-- `05_inference.png`
-- `06_gradcam.png`
+- `03_inference.png`
+- `04_gradcam.png`
 
 Inference automatically uses CUDA when a compatible GPU is available and otherwise runs on the CPU.
 
@@ -193,7 +193,7 @@ sys.path.insert(0, str(root / "modules" / "02_XAI-STIM"))
 
 ### Classification
 
-Pass a single recording sampled at 10 kHz to `inference`. It creates complete one-second windows, applies the preprocessing internally, and returns one class-probability pair per window. Set `overlap` to the fraction shared by consecutive windows; the default is `0.5` (50%). Trailing samples that do not fill a complete window are discarded.
+Pass a single recording sampled at 10 kHz to `inference`. It creates complete one-second windows, applies the preprocessing internally, and returns one class-probability pair per window. Set `overlap` to the fraction shared by consecutive windows; the default is `0.0` (0%).
 
 ```python
 from processing import load_matrix
@@ -236,7 +236,7 @@ python modules/03_expert_validation/traj2json.py
 
 Then open `modules/03_expert_validation/XAI_STIM_validation_tool.html` in a web browser and select the generated JSON file. The interface supports trajectory review, manual annotation of STN-typical regions, comparison with Grad-CAM explanations, and JSON export of the expert responses.
 
-## Citation
+# Citation
 
 If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM publication. The complete bibliographic reference and DOI will be added upon publication.
 
@@ -248,9 +248,9 @@ If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM pu
 
 The code and checkpoints in this repository support evaluation and explanation workflows with the released models. The open datasets used by the project are available at:
 
-[2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2026). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo, v2. https://doi.org/10.5281/zenodo.23259894
+[3] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2026). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo, v2. https://doi.org/10.5281/zenodo.23259894
 
-[3] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
+[4] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
 
 ## Contributing
 
