@@ -5,7 +5,7 @@ Signals are resampled to 10 kHz when necessary, divided into non-overlapping
 one-second windows, preprocessed with the data-preparation functions, and
 mapped at the self-attention layer, as in the development inference script.
 Each window map is min-max scaled; maps are then concatenated per signal,
-smoothed with a 250-sample Gaussian, and scaled again to the [0, 1] range.
+smoothed with a 500-sample Gaussian, and scaled again to the [0, 1] range.
 
 Author: Fabrizio Sciscenti
         H-MoVe, Department of Electronics and Telecommunications, Politecnico di Torino

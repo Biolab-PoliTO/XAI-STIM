@@ -2,5 +2,4 @@
 .DS_Store
 
 # Cartelle provvisorie
-/old
-/dataset
+/build

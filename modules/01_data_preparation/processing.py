@@ -8,7 +8,7 @@ normalization, 200-Hz high-pass filtering, and harmonic notch filtering.
 Author: Fabrizio Sciscenti
         H-MoVe, Department of Electronics and Telecommunications, Politecnico di Torino
         fabrizio.sciscenti@polito.it
-Last updated: 7 October 2026
+Last updated: 11 October 2026
 """
 
 from pathlib import Path
@@ -86,13 +86,38 @@ def split_signals(matrix, metadata, overlaps):
     return matrix, pd.DataFrame(rows, columns=columns)
 
 
-def highpass_filter(matrix):
-    """Apply the training-time 200-Hz zero-phase high-pass filter."""
-    matrix = np.asarray(matrix, dtype=float)
-    if matrix.ndim != 2 or matrix.shape[1] != WINDOW:
-        raise ValueError(f"Expected a matrix with shape (n, {WINDOW})")
-    b, a = signal.butter(ORDER, HIGHPASS, btype="highpass", fs=TARGET_FS)
-    return _forward_reverse_filter(matrix, ((b, a),))
+def create_filter_coefficients():
+    """Create the high-pass and harmonic-notch coefficients once."""
+    coefficients = [signal.butter(ORDER, HIGHPASS, btype="highpass", fs=TARGET_FS)]
+    coefficients.extend(
+        signal.iirnotch(frequency, NOTCH_QUALITY, TARGET_FS)
+        for frequency in NOTCH_FREQUENCIES
+    )
+    return tuple(coefficients)
+
+
+def _signal_matrix(signals):
+    """Return a non-empty row-wise signal matrix and whether input was 1-D."""
+    matrix = np.asarray(signals)
+    vector = matrix.ndim == 1
+    if vector:
+        matrix = matrix[None, :]
+    if matrix.ndim != 2:
+        raise ValueError("signals must be a vector or a matrix with signals on rows")
+    if matrix.shape[1] == 0:
+        raise ValueError("signals cannot be empty")
+    return matrix, vector
+
+
+def highpass_filter(signals, coefficients=None):
+    """Apply the 200-Hz high-pass filter to signals of any sample length."""
+    matrix, vector = _signal_matrix(signals)
+    if coefficients is None:
+        b, a = signal.butter(ORDER, HIGHPASS, btype="highpass", fs=TARGET_FS)
+    else:
+        b, a = coefficients[0]
+    result = _forward_reverse_filter(matrix, ((b, a),))
+    return result[0] if vector else result
 
 
 def _forward_reverse_filter(matrix, coefficients):
@@ -107,40 +132,36 @@ def _forward_reverse_filter(matrix, coefficients):
     return filtered
 
 
-def filter_signals(matrix):
-    """Apply the high-pass and harmonic notch filters used for training."""
-    matrix = np.asarray(matrix, dtype=float)
-    if matrix.ndim != 2 or matrix.shape[1] != WINDOW:
-        raise ValueError(f"Expected a matrix with shape (n, {WINDOW})")
-    coefficients = [signal.butter(ORDER, HIGHPASS, btype="highpass", fs=TARGET_FS)]
-    coefficients.extend(
-        signal.iirnotch(frequency, NOTCH_QUALITY, TARGET_FS)
-        for frequency in NOTCH_FREQUENCIES
-    )
-    return _forward_reverse_filter(matrix, coefficients)
+def filter_signals(signals, coefficients=None):
+    """Apply high-pass and notch filters to signals of any sample length."""
+    matrix, vector = _signal_matrix(signals)
+    if coefficients is None:
+        coefficients = create_filter_coefficients()
+    result = _forward_reverse_filter(matrix, coefficients)
+    return result[0] if vector else result
 
 
-def zscore_normalize(matrix):
-    """Apply training-time row-wise amplitude z-score normalization."""
-    matrix = np.asarray(matrix)
-    if matrix.ndim != 2 or matrix.shape[1] != WINDOW:
-        raise ValueError(f"Expected a matrix with shape (n, {WINDOW})")
+def zscore_normalize(signals):
+    """Apply row-wise z-score normalization to signals of any sample length."""
+    matrix, vector = _signal_matrix(signals)
     mean = matrix.mean(axis=1, keepdims=True)
     std = matrix.std(axis=1, keepdims=True)
-    return (matrix - mean) / (std + 1e-8)
+    result = (matrix - mean) / (std + 1e-8)
+    return result[0] if vector else result
 
 
-def process_signals(matrix):
-    """Reproduce the complete preprocessing used to train XAI-STIM.
+def process_signals(signals, coefficients=None):
+    """Normalize and filter signals of any sample length.
 
     Normalization intentionally precedes filtering, matching the reference
     ``miscellaneous/utils/processing.py`` implementation.
     """
-    return filter_signals(zscore_normalize(matrix)) #zscore_normalize(filter_signals(matrix))
+    return filter_signals(zscore_normalize(signals), coefficients)
 
 
 def process_datasets():
     overlaps = pd.read_csv(OVERLAPS)
+    coefficients = create_filter_coefficients()
     for dataset, frequency in SAMPLING_FREQUENCIES.items():
         source = INPUT / dataset
         files = sorted(source.rglob("*.npz"))
@@ -151,7 +172,7 @@ def process_datasets():
             matrix, metadata = resample_signals(load_matrix(path), metadata, frequency)
             matrix, metadata = split_signals(matrix, metadata, overlaps)
             if len(matrix):
-                matrix = process_signals(matrix)
+                matrix = process_signals(matrix, coefficients)
 
             folder = OUTPUT / dataset / path.relative_to(source).parent
             folder.mkdir(parents=True, exist_ok=True)

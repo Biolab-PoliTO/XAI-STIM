@@ -1,7 +1,7 @@
 # XAI-STIM: eXplainable Artificial Intelligence for SubThalamic nucleus Intraoperative Mapping
 
 <p align="center">
-  <img src="results/main_figures/06_gradcam.png" alt="XAI-STIM Grad-CAM example" style="width:100%; height:auto;"/>
+  <img src="results/main_figures/04_gradcam.png" alt="XAI-STIM Grad-CAM example" style="width:100%; height:auto;"/>
 </p>
 
 Deep Brain Stimulation (DBS) of the Subthalamic Nucleus (STN) is an effective treatment for motor symptoms in people with Parkinson's disease. Accurate placement of the stimulating electrode is essential for obtaining the best therapeutic outcome. During surgery, Microelectrode Recordings (MERs) provide neurophysiological information that helps clinicians identify whether the electrode is inside or outside the STN.
@@ -26,10 +26,10 @@ Deep Brain Stimulation (DBS) of the Subthalamic Nucleus (STN) is an effective tr
 
 The complete sample workflow is available in [`main.ipynb`](main.ipynb). It uses the included [`sample_data.npz`](sample_data.npz), [`sample_meta.csv`](sample_meta.csv), and trained model.
 
-Python 3.10 or newer is recommended. Install the required packages with:
+Python 3.12 is supported. To install the pinned requirements, run:
 
 ```bash
-python -m pip install numpy pandas scipy matplotlib torch scikit-learn py7zr pyarrow
+python -m pip install -r requirements.txt
 ```
 
 Run the notebook cells in order. The notebook performs:
@@ -37,13 +37,9 @@ Run the notebook cells in order. The notebook performs:
 ```text
 data import
     ↓
-resampling to 10 kHz
+resampling and filtering
     ↓
-one-second windowing
-    ↓
-normalization and filtering
-    ↓
-XAI-STIM inference
+one-second windowing and inference
     ↓
 1D Grad-CAM generation
 ```
@@ -51,9 +47,7 @@ XAI-STIM inference
 The resulting figures are written to `results/main_figures/`:
 
 - `01_raw_signals.png`
-- `02_resampling.png`
-- `03_windowing.png`
-- `04_processing.png`
+- `02_processed_signals.png`
 - `05_inference.png`
 - `06_gradcam.png`
 
@@ -64,6 +58,7 @@ Inference automatically uses CUDA when a compatible GPU is available and otherwi
 ```text
 XAI-STIM/
 ├── main.ipynb
+├── requirements.txt
 ├── sample_data.npz
 ├── sample_meta.csv
 ├── modules/
@@ -89,15 +84,23 @@ XAI-STIM/
 ├── results/
 │   ├── overlap.csv
 │   ├── AiO_data_split.csv
+│   ├── all_in_one.csv
+│   ├── leave_LeadPoint_out.csv
+│   ├── leave_NeuroSet_out.csv
+│   ├── leave_AlphaMap_out.csv
 │   └── main_figures/
 └── README.md
 ```
 
 ## Files description
 
+### Release scope
+
+This repository is intended to support **checkpoint-based result replication**: it distributes trained XAI-STIM checkpoints and utilities for data preparation, inference, performance evaluation, Grad-CAM generation, and expert-review data collection.
+
 ### Sample workflow
 
-- `main.ipynb`: complete demonstration of data import, preprocessing, inference, performance calculation, and Grad-CAM generation.
+- `main.ipynb`: complete demonstration of data import, resampling and filtering, window-level inference, probability-by-depth visualization, and Grad-CAM generation.
 - `sample_data.npz`: MER signals from a representative patient hemisphere, stored as rows of a zero-padded matrix.
 - `sample_meta.csv`: metadata associated with the sample recordings.
 
@@ -105,13 +108,13 @@ XAI-STIM/
 
 - `import_datasets.py`: downloads and standardizes the *LeadPoint*, *NeuroSet*, and *AlphaMap* datasets into paired NPZ/CSV files.
 - `compute_overlap.py`: calculates patient- and class-specific window overlaps to balance the number of training examples within patients and across datasets.
-- `processing.py`: contains the signal-loading, resampling, windowing, normalization, high-pass, and notch-filtering functions.
+- `processing.py`: contains signal-loading, resampling, windowing, normalization, high-pass, and notch-filtering functions. Its normalization and filtering functions accept individual recordings or row-wise matrices of any non-zero sample length.
 - `split_data.py`: organizes processed patient folders into the all-in-one training, validation, and test partitions defined in `results/AiO_data_split.csv`.
 
 ### Classification and explainability
 
 - `xai_stim.py`: defines the XAI-STIM neural-network architecture.
-- `inference.py`: loads a trained checkpoint, applies the complete preprocessing pipeline, and returns class probabilities. It also supports batch validation exports.
+- `inference.py`: splits a complete 10 kHz recording into one-second windows with a configurable overlap (50% by default), applies the model preprocessing, loads a trained checkpoint, and returns one probability pair per window. It also supports matrices of prepared windows for batch validation exports.
 - `gradcam1D.py`: computes one-dimensional Grad-CAM maps and provides the trajectory plotting function used by the sample notebook.
 - `compute_performances.py`: computes overall and patient-wise AUC, F1 score, sensitivity, and specificity from prediction tables.
 - `trained_models/`: contains the all-in-one checkpoint and the three leave-one-dataset-out checkpoints.
@@ -126,8 +129,8 @@ XAI-STIM/
 
 - `overlap.csv`: patient- and class-specific overlap values used for one-second window extraction.
 - `AiO_data_split.csv`: patient allocation and window counts for the all-in-one experiment.
-- `AiO.csv`: patient-wise all-in-one validation results.
-- `LODO.csv`: patient-wise leave-one-dataset-out validation results.
+- `all_in_one.csv`: patient-wise all-in-one validation results.
+- `leave_<dataset_name>_out.csv`: patient-wise leave-one-dataset-out validation results.
 - `main_figures/`: figures generated by the sample notebook.
 
 ## Preparing custom data
@@ -190,14 +193,18 @@ sys.path.insert(0, str(root / "modules" / "02_XAI-STIM"))
 
 ### Classification
 
-Each input row passed to `inference` must represent one second sampled at 10 kHz. The function applies the preprocessing internally.
+Pass a single recording sampled at 10 kHz to `inference`. It creates complete one-second windows, applies the preprocessing internally, and returns one class-probability pair per window. Set `overlap` to the fraction shared by consecutive windows; the default is `0.5` (50%). Trailing samples that do not fill a complete window are discarded.
 
 ```python
 from processing import load_matrix
 from inference import inference
 
-windows = load_matrix(root / "path" / "to" / "windows.npz")
-probabilities = inference(windows)
+recording = load_matrix(root / "path" / "to" / "recording_10khz.npz")[0]
+probabilities, starts = inference(
+    recording,
+    overlap=0.5,
+    return_window_starts=True,
+)
 predicted_classes = probabilities.argmax(axis=1)
 ```
 
@@ -229,12 +236,21 @@ python modules/03_expert_validation/traj2json.py
 
 Then open `modules/03_expert_validation/XAI_STIM_validation_tool.html` in a web browser and select the generated JSON file. The interface supports trajectory review, manual annotation of STN-typical regions, comparison with Grad-CAM explanations, and JSON export of the expert responses.
 
+## Data and code availability
+
+The code and checkpoints in this repository support evaluation and explanation workflows with the released models. The open datasets used by the project are available at:
+
+[2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. (2026). *ML-STIM: Machine Learning for SubThalamic nucleus Intraoperative Mapping* [Dataset]. Zenodo, v2. https://doi.org/10.5281/zenodo.23259894
+
+[3] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
+
 ## Citation
 
 If you use `XAI-STIM` in your research, please cite the accompanying XAI-STIM publication. The complete bibliographic reference and DOI will be added upon publication.
 
 [1] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., & Ghislieri, M. *Interpretable Deep Learning for SubThalamic Nucleus Targeting from Microelectrode Recordings: A Multicentre Cross-Dataset Study* - *submitted for publication*
 
+<<<<<<< Updated upstream
 [2] Sciscenti, F., Agostini, V., Rizzi, L., Lanotte, M., Ghislieri, M. (2026). *Validation of an Interpretable AI System for Localizing the SubThalamic Nucleus During DBS Neurosurgery*. Artificial Intelligence in Medicine (AIME) 2026. https://doi.org/10.1007/978-3-032-30710-1_30
 
 The open datasets used in this project are available at:
@@ -243,6 +259,8 @@ The open datasets used in this project are available at:
 
 [4] Ciecierski, K., Mandat, T. (2023). *RAW Deep Brain Stmulation Recordings* [Dataset]. Mendeley Data, v1. https://doi.org/10.17632/tr93krswn2.1
 
+=======
+>>>>>>> Stashed changes
 ## Contributing
 
 Contributions are welcome. When reporting a bug, please include:
